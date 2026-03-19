@@ -1,0 +1,13 @@
+{
+  "name": "temposwap-market-maker",
+  "version": "1.0.0",
+  "description": "Automated Market Maker bot for TempoSwap DEX",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "viem": "^2.47.4"
+  }
+}
