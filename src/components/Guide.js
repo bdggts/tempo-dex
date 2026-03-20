@@ -13,16 +13,47 @@ const STEPS = [
   },
   {
     num: '02',
-    title: 'Add Tempo Testnet',
+    title: 'Add Tempo Networks',
     icon: '🌐',
-    desc: 'Add Tempo Testnet network to your MetaMask wallet',
-    detail: 'Open MetaMask → Settings → Networks → Add Network. Enter these details:',
-    table: [
-      ['Network Name', 'Tempo Testnet'],
-      ['RPC URL', 'https://rpc.moderato.tempo.xyz'],
-      ['Chain ID', '42431'],
-      ['Currency Symbol', 'USD'],
-      ['Explorer', 'https://explore.testnet.tempo.xyz'],
+    desc: 'One-click add Tempo Mainnet or Testnet to MetaMask',
+    detail: 'Click the button below to instantly add the network to MetaMask, or add manually using the details shown:',
+    networks: [
+      {
+        label: '🟢 Mainnet',
+        color: '#2ecc71',
+        chainParams: {
+          chainId: '0x1079',
+          chainName: 'Tempo Mainnet',
+          nativeCurrency: { name: 'USD', symbol: 'USD', decimals: 18 },
+          rpcUrls: ['https://rpc.tempo.xyz'],
+          blockExplorerUrls: ['https://explore.tempo.xyz'],
+        },
+        table: [
+          ['Network Name', 'Tempo Mainnet'],
+          ['RPC URL', 'https://rpc.tempo.xyz'],
+          ['Chain ID', '4217'],
+          ['Currency Symbol', 'USD'],
+          ['Explorer', 'https://explore.tempo.xyz'],
+        ],
+      },
+      {
+        label: '🟠 Testnet',
+        color: '#f39c12',
+        chainParams: {
+          chainId: '0xa5cf',
+          chainName: 'Tempo Testnet',
+          nativeCurrency: { name: 'USD', symbol: 'USD', decimals: 18 },
+          rpcUrls: ['https://rpc.moderato.tempo.xyz'],
+          blockExplorerUrls: ['https://explore.testnet.tempo.xyz'],
+        },
+        table: [
+          ['Network Name', 'Tempo Testnet'],
+          ['RPC URL', 'https://rpc.moderato.tempo.xyz'],
+          ['Chain ID', '42431'],
+          ['Currency Symbol', 'USD'],
+          ['Explorer', 'https://explore.testnet.tempo.xyz'],
+        ],
+      },
     ],
   },
   {
@@ -72,10 +103,10 @@ export default function Guide() {
   return (
     <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', maxWidth: '600px' }}>
       <div style={{ padding: '20px', borderBottom: '1px solid var(--border-light)' }}>
-        <h2 style={{ fontSize: '22px', marginBottom: '6px' }}>📚 Testnet Guide</h2>
+        <h2 style={{ fontSize: '22px', marginBottom: '6px' }}>📚 Getting Started Guide</h2>
         <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6 }}>
-          Follow these steps to test TempoSwap on the Tempo Testnet.<br />
-          All tokens are <strong style={{ color: 'var(--success)' }}>FREE</strong> — no real money needed!
+          Follow these steps to start using TempoSwap on Mainnet or Testnet.<br />
+          Testnet tokens are <strong style={{ color: 'var(--success)' }}>FREE</strong> — no real money needed!
         </p>
       </div>
 
@@ -107,7 +138,62 @@ export default function Guide() {
               <div style={{ padding: '16px', background: 'var(--bg-card)', borderRadius: '0 0 12px 12px', borderTop: 'none', marginTop: '-4px', animation: 'fadeIn 0.2s' }}>
                 <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '12px' }}>{step.detail}</p>
                 
-                {/* Network Table */}
+                {/* Network Tables (multi-network) */}
+                {step.networks && step.networks.map((net) => (
+                  <div key={net.label} style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: net.color, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: net.color, display: 'inline-block' }}></span>
+                      {net.label}
+                    </div>
+                    <div style={{ background: 'var(--bg-panel)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-light)' }}>
+                      {net.table.map(([key, val]) => (
+                        <div key={key} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid var(--border-light)', fontSize: '13px' }}>
+                          <span style={{ color: 'var(--text-dim)' }}>{key}</span>
+                          <span style={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 600, fontSize: '12px', color: 'var(--text-main)', userSelect: 'all' }}>{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {net.chainParams && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (typeof window !== 'undefined' && window.ethereum) {
+                            window.ethereum.request({
+                              method: 'wallet_addEthereumChain',
+                              params: [net.chainParams],
+                            }).then(() => alert(`✅ ${net.chainParams.chainName} added to MetaMask!`))
+                              .catch((err) => alert(`⚠️ Error: ${err.message || 'Could not add network'}`));
+                          } else {
+                            alert('🦊 Please install MetaMask first!');
+                          }
+                        }}
+                        style={{
+                          marginTop: '10px',
+                          width: '100%',
+                          padding: '12px',
+                          background: `${net.color}20`,
+                          border: `1px solid ${net.color}55`,
+                          borderRadius: '10px',
+                          color: net.color,
+                          fontWeight: 700,
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = `${net.color}35`; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = `${net.color}20`; }}
+                      >
+                        🦊 Add {net.chainParams.chainName} to MetaMask
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Single Network Table (legacy fallback) */}
                 {step.table && (
                   <div style={{ background: 'var(--bg-panel)', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-light)', marginBottom: '12px' }}>
                     {step.table.map(([key, val]) => (

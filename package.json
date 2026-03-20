@@ -1,26 +1,32 @@
 {
-  "name": "tempo-dex",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@tanstack/react-query": "^5.90.21",
-    "jspdf": "^4.2.1",
-    "jspdf-autotable": "^5.0.7",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "viem": "^2.47.4",
-    "wagmi": "^3.5.0",
-    "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6"
-  }
+    "name": "tempo-dex",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "eslint"
+    },
+    "dependencies": {
+        "@tanstack/react-query": "^5.90.21",
+        "jspdf": "^4.2.1",
+        "jspdf-autotable": "^5.0.7",
+        "next": "16.1.6",
+        "react": "19.2.3",
+        "react-dom": "19.2.3",
+        "solc": "^0.8.34",
+        "viem": "^2.47.4",
+        "wagmi": "^3.5.0",
+        "xlsx": "^0.18.5"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-ethers": "^4.0.6",
+        "dotenv": "^17.3.1",
+        "eslint": "^9",
+        "eslint-config-next": "16.1.6",
+        "ethers": "^6.16.0",
+        "hardhat": "^3.1.12"
+    },
+    "type": "module"
 }

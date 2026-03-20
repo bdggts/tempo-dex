@@ -1,10 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
-import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, TICK_SPACING, MIN_TICK, MAX_TICK, tickToPrice, formatTick, PRICE_SCALE } from '@/config/web3';
+import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, TICK_SPACING, MIN_TICK, MAX_TICK, tickToPrice, formatTick, PRICE_SCALE, getTokensForChain } from '@/config/web3';
 
-const TOKEN_LIST = Object.values(TOKENS);
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
 
 export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
@@ -12,7 +11,8 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
   const { connectors, connect } = useConnect();
   const { switchChain } = useSwitchChain();
 
-  const [selectedToken, setSelectedToken] = useState(TOKENS.BETA_USD);
+  const networkTokens = getTokensForChain(currentNetworkId);
+  const [selectedToken, setSelectedToken] = useState(networkTokens[0] || null);
   const [amount, setAmount] = useState('');
   const [isBid, setIsBid] = useState(true); // true = buy, false = sell
   const [tick, setTick] = useState(0);
@@ -20,6 +20,13 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
   const [flipTick, setFlipTick] = useState(-10); // flip at -10 ticks for bid by default
   const [orderId, setOrderId] = useState('');
   const [cancelId, setCancelId] = useState('');
+
+  // Reset token when network changes
+  useEffect(() => {
+    const tokens = getTokensForChain(currentNetworkId);
+    setSelectedToken(tokens[0] || null);
+    setAmount('');
+  }, [currentNetworkId]);
 
   const [txError, setTxError] = useState('');
   const { writeContract, data: txHash, isPending, reset } = useWriteContract({
@@ -33,19 +40,58 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
   });
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
 
-  // Read Wallet Balance (Use pUSD for BUY, selectedToken for SELL)
-  const balanceToken = isBid ? TOKENS.PATH_USD : selectedToken;
-  const { data: balanceData } = useBalance({ address, token: balanceToken.address, chainId: currentNetworkId, query: { enabled: !!address, refetchInterval: 5000 } });
+  // Read Wallet Balance (Use quote token for BUY, selectedToken for SELL) — must be before any early returns
+  const quoteToken = getTokensForChain(currentNetworkId).find(t => t.isQuoteToken);
+  const balanceToken = selectedToken ? (isBid ? (quoteToken || selectedToken) : selectedToken) : null;
+  const { data: balanceData } = useBalance({ address, token: balanceToken?.address, chainId: currentNetworkId, query: { enabled: !!address && !!balanceToken, refetchInterval: 5000 } });
   
   const formatBal = (balData) => {
     if (!balData) return '0';
-    const val = parseFloat(formatUnits(balData.value, balData.decimals));
-    if (val >= 1_000_000) return (val / 1_000_000).toFixed(2) + 'M';
-    if (val >= 1_000) return (val / 1_000).toFixed(2) + 'K';
-    return val.toFixed(2);
+    try {
+      const raw = balData.value;
+      if (raw === 0n) return '0';
+      const fullStr = formatUnits(raw, balData.decimals);
+      const parts = fullStr.split('.');
+      const intPart = parts[0];
+      const len = intPart.length;
+      if (len > 15) return intPart.slice(0, len - 15) + '.' + intPart.slice(len - 15, len - 13) + 'Q';
+      if (len > 12) return intPart.slice(0, len - 12) + '.' + intPart.slice(len - 12, len - 10) + 'T';
+      if (len > 9)  return intPart.slice(0, len - 9)  + '.' + intPart.slice(len - 9,  len - 7)  + 'B';
+      if (len > 6)  return intPart.slice(0, len - 6)  + '.' + intPart.slice(len - 6,  len - 4)  + 'M';
+      if (len > 3)  return intPart.slice(0, len - 3)  + '.' + intPart.slice(len - 3,  len - 1)  + 'K';
+      const val = parseFloat(fullStr);
+      return val.toFixed(2);
+    } catch { return '0'; }
   };
 
-  const parsedAmount = amount && !isNaN(amount) ? parseUnits(amount, selectedToken.decimals) : 0n;
+  // Show empty state when no tokens for this network
+  if (!selectedToken) {
+    return (
+      <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
+        <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+          <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>No Tokens on {currentNetworkId === 4217 ? 'Mainnet' : 'Testnet'}</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '340px', margin: '0 auto' }}>
+            {currentNetworkId === 4217
+              ? 'Mainnet tokens have not been configured yet. Switch to Testnet to place orders.'
+              : 'No tokens available on this network.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const safeParseUnits = (value, decimals) => {
+    try {
+      let str = String(value);
+      if (str.includes('e') || str.includes('E')) {
+        str = Number(str).toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: decimals });
+      }
+      if (str.includes('.')) { const p = str.split('.'); str = p[1].slice(0, decimals) ? `${p[0]}.${p[1].slice(0, decimals)}` : p[0]; }
+      return parseUnits(str, decimals);
+    } catch { return 0n; }
+  };
+  const parsedAmount = amount && !isNaN(amount) ? safeParseUnits(amount, selectedToken.decimals) : 0n;
 
   const spendToken = isBid ? TOKENS.PATH_USD : selectedToken;
   
@@ -144,10 +190,10 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
             <label style={{ fontSize: '12px', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Token</label>
             <select
               value={selectedToken.symbol}
-              onChange={(e) => setSelectedToken(TOKEN_LIST.find(t => t.symbol === e.target.value))}
+              onChange={(e) => setSelectedToken(getTokensForChain(currentNetworkId).find(t => t.symbol === e.target.value))}
               style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-main)', padding: '10px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 600 }}
             >
-              {TOKEN_LIST.map(t => <option key={t.symbol} value={t.symbol}>{t.logo} {t.symbol}</option>)}
+              {getTokensForChain(currentNetworkId).map(t => <option key={t.symbol} value={t.symbol}>{t.logo} {t.symbol}</option>)}
             </select>
           </div>
 
@@ -171,27 +217,34 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
             type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00"
             style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-main)', padding: '12px 16px', borderRadius: '10px', fontSize: '20px', fontWeight: 600 }}
           />
-          <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-            <span style={{ color: 'var(--text-dim)', fontSize: '12px' }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceData)}</strong> {balanceToken.symbol}</span>
-            {balanceData && parseFloat(formatUnits(balanceData.value, balanceData.decimals)) > 0 && (
-              <button
-                onClick={() => {
-                  if (isBid) {
-                    const pUsdBalance = balanceData?.value || 0n;
-                    if (pUsdBalance > 0n) {
-                      let amountBigInt = (pUsdBalance * BigInt(PRICE_SCALE)) / BigInt(PRICE_SCALE + tick);
-                      // Cap to uint128 for contract safety
-                      if (amountBigInt > MAX_UINT128) amountBigInt = MAX_UINT128;
-                      setAmount(formatUnits(amountBigInt, selectedToken.decimals));
-                    }
-                  } else {
-                    let bal = balanceData?.value || 0n;
-                    if (bal > MAX_UINT128) bal = MAX_UINT128;
-                    setAmount(formatUnits(bal, selectedToken.decimals));
-                  }
-                }}
-                style={{ background: 'var(--brand-primary-dim)', color: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.5px' }}
-              >MAX</button>
+          <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', overflow: 'hidden', gap: '6px' }}>
+            <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceData)}</strong> {balanceToken.symbol}</span>
+            {balanceData && balanceData.value > 0n && (
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[25, 50, 75, 100].map(pct => (
+                  <button key={pct}
+                    onClick={() => {
+                      if (isBid) {
+                        const pUsdBalance = balanceData?.value || 0n;
+                        if (pUsdBalance > 0n) {
+                          let amountBigInt = (pUsdBalance * BigInt(PRICE_SCALE)) / BigInt(PRICE_SCALE + tick);
+                          if (amountBigInt > MAX_UINT128) amountBigInt = MAX_UINT128;
+                          const portion = amountBigInt * BigInt(pct) / 100n;
+                          const val = parseFloat(formatUnits(portion, selectedToken.decimals));
+                          setAmount(val % 1 === 0 ? val.toString() : val.toFixed(2));
+                        }
+                      } else {
+                        let bal = balanceData?.value || 0n;
+                        if (bal > MAX_UINT128) bal = MAX_UINT128;
+                        const portion = bal * BigInt(pct) / 100n;
+                        const val = parseFloat(formatUnits(portion, selectedToken.decimals));
+                        setAmount(val % 1 === 0 ? val.toString() : val.toFixed(2));
+                      }
+                    }}
+                    style={{ background: 'var(--brand-primary-dim)', color: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', borderRadius: '6px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
+                  >{pct}%</button>
+                ))}
+              </div>
             )}
           </div>
         </div>

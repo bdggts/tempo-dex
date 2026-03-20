@@ -2,15 +2,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
-import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR } from '@/config/web3';
+import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, getTokensForChain } from '@/config/web3';
 
-const TOKEN_LIST = Object.values(TOKENS);
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
 
 // ── Token Selector Modal ──────────────────────────────────────────────────────
-function TokenModal({ onSelect, excludeToken, onClose }) {
+function TokenModal({ onSelect, excludeToken, onClose, chainId }) {
   const [search, setSearch] = useState('');
-  const filtered = TOKEN_LIST.filter(t =>
+  const tokenList = getTokensForChain(chainId);
+  const filtered = tokenList.filter(t =>
     t.symbol !== excludeToken?.symbol &&
     (t.symbol.toLowerCase().includes(search.toLowerCase()) ||
      t.name.toLowerCase().includes(search.toLowerCase()))
@@ -40,7 +40,7 @@ function TokenModal({ onSelect, excludeToken, onClose }) {
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
               style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%', padding: '12px 14px', borderRadius: '12px', border: 'none', background: 'none', color: 'var(--text-main)', cursor: 'pointer', textAlign: 'left', transition: '0.15s' }}
             >
-              <span style={{ fontSize: '28px', width: '36px', textAlign: 'center' }}>{token.logo}</span>
+              <div style={{ width: '36px', height: '36px' }}></div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700 }}>{token.symbol}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>{token.name}</div>
@@ -66,32 +66,74 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   const [modal, setModal] = useState(null); // 'in' or 'out'
   const [showSettings, setShowSettings] = useState(false);
 
-  const [tokenIn, setTokenIn] = useState(TOKENS.BETA_USD);
-  const [tokenOut, setTokenOut] = useState(TOKENS.PATH_USD);
+  const networkTokens = getTokensForChain(currentNetworkId);
+  const [tokenIn, setTokenIn] = useState(networkTokens[0] || null);
+  const [tokenOut, setTokenOut] = useState(networkTokens[1] || null);
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState(0.5);
 
+  // Reset tokens when network changes
+  useEffect(() => {
+    const tokens = getTokensForChain(currentNetworkId);
+    setTokenIn(tokens[0] || null);
+    setTokenOut(tokens[1] || null);
+    setAmountIn('');
+  }, [currentNetworkId]);
+
   // Read Wallet Balances
-  const { data: balanceIn } = useBalance({ address, token: tokenIn.address, chainId: currentNetworkId, query: { enabled: !!address, refetchInterval: 5000 } });
-  const { data: balanceOut } = useBalance({ address, token: tokenOut.address, chainId: currentNetworkId, query: { enabled: !!address, refetchInterval: 5000 } });
+  const { data: balanceIn } = useBalance({ address, token: tokenIn?.address, chainId: currentNetworkId, query: { enabled: !!address && !!tokenIn, refetchInterval: 5000 } });
+  const { data: balanceOut } = useBalance({ address, token: tokenOut?.address, chainId: currentNetworkId, query: { enabled: !!address && !!tokenOut, refetchInterval: 5000 } });
   
   const formatBal = (balData) => {
     if (!balData) return '0';
-    const val = parseFloat(formatUnits(balData.value, balData.decimals));
-    if (val >= 1_000_000) return (val / 1_000_000).toFixed(2) + 'M';
-    if (val >= 1_000) return (val / 1_000).toFixed(2) + 'K';
-    return val.toFixed(2);
+    try {
+      const raw = balData.value;
+      if (raw === 0n) return '0';
+      // Convert to string without scientific notation
+      const fullStr = formatUnits(raw, balData.decimals);
+      // Parse the integer part length to determine suffix
+      const parts = fullStr.split('.');
+      const intPart = parts[0];
+      const len = intPart.length;
+      if (len > 15) return intPart.slice(0, len - 15) + '.' + intPart.slice(len - 15, len - 13) + 'Q';
+      if (len > 12) return intPart.slice(0, len - 12) + '.' + intPart.slice(len - 12, len - 10) + 'T';
+      if (len > 9)  return intPart.slice(0, len - 9)  + '.' + intPart.slice(len - 9,  len - 7)  + 'B';
+      if (len > 6)  return intPart.slice(0, len - 6)  + '.' + intPart.slice(len - 6,  len - 4)  + 'M';
+      if (len > 3)  return intPart.slice(0, len - 3)  + '.' + intPart.slice(len - 3,  len - 1)  + 'K';
+      const val = parseFloat(fullStr);
+      return val.toFixed(2);
+    } catch { return '0'; }
   };
 
-  const parsedAmountIn = amountIn && !isNaN(amountIn)
-    ? parseUnits(amountIn, tokenIn.decimals) : 0n;
+  // Safe parseUnits — handles scientific notation like 8.5e+31
+  const safeParseUnits = (value, decimals) => {
+    try {
+      // Convert scientific notation to plain decimal string
+      let str = String(value);
+      if (str.includes('e') || str.includes('E')) {
+        str = Number(str).toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: decimals });
+      }
+      // Remove trailing zeros after decimal, but keep at least the integer
+      if (str.includes('.')) {
+        const parts = str.split('.');
+        const frac = parts[1].slice(0, decimals); // truncate to max decimals
+        str = frac ? `${parts[0]}.${frac}` : parts[0];
+      }
+      return parseUnits(str, decimals);
+    } catch {
+      return 0n;
+    }
+  };
+
+  const parsedAmountIn = amountIn && !isNaN(amountIn) && tokenIn
+    ? safeParseUnits(amountIn, tokenIn.decimals) : 0n;
 
   // Read Allowance
   const { data: allowance } = useReadContract({
-    address: tokenIn.address, abi: ERC20_ABI,
+    address: tokenIn?.address, abi: ERC20_ABI,
     functionName: 'allowance',
-    args: address ? [address, DEX_ADDRESS] : undefined,
-    query: { enabled: !!address, refetchInterval: 5000 },
+    args: address && tokenIn ? [address, DEX_ADDRESS] : undefined,
+    query: { enabled: !!address && !!tokenIn, refetchInterval: 5000 },
     chainId: currentNetworkId,
   });
 
@@ -113,8 +155,8 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   const { data: quotedOut, isError: quoteError } = useReadContract({
     address: DEX_ADDRESS, abi: DEX_ABI,
     functionName: 'quoteSwapExactAmountIn',
-    args: parsedAmountIn && parsedAmountIn > 0n ? [tokenIn.address, tokenOut.address, parsedAmountIn] : undefined,
-    query: { enabled: !!parsedAmountIn && parsedAmountIn > 0n },
+    args: parsedAmountIn && parsedAmountIn > 0n && tokenIn && tokenOut ? [tokenIn.address, tokenOut.address, parsedAmountIn] : undefined,
+    query: { enabled: !!parsedAmountIn && parsedAmountIn > 0n && !!tokenIn && !!tokenOut },
     chainId: currentNetworkId,
   });
 
@@ -128,8 +170,8 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   const feeBigInt = (quotedOut != null) ? (quotedOut * BigInt(PLATFORM_FEE_BPS)) / BigInt(FEE_DENOMINATOR) : 0n;
   const netOutBigInt = (quotedOut != null) ? quotedOut - feeBigInt : 0n;
 
-  const feeDisplay = quotedOut != null ? parseFloat(formatUnits(feeBigInt, tokenOut.decimals)) : 0;
-  const netOutDisplay = quotedOut != null ? formatUnits(netOutBigInt, tokenOut.decimals) : '0';
+  const feeDisplay = quotedOut != null && tokenOut ? parseFloat(formatUnits(feeBigInt, tokenOut.decimals)) : 0;
+  const netOutDisplay = quotedOut != null && tokenOut ? formatUnits(netOutBigInt, tokenOut.decimals) : '0';
 
   const [txError, setTxError] = useState('');
   const { writeContract, data: txHash, isPending } = useWriteContract({
@@ -205,20 +247,36 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     setAmountIn('');
   };
 
-  const amountOut = quotedOut && !quoteError && amountIn ? formatUnits(quotedOut, tokenOut.decimals) : '';
-  const priceDisplay = amountIn && amountOut && !isNaN(amountOut)
+  const amountOut = quotedOut && !quoteError && amountIn && tokenOut ? formatUnits(quotedOut, tokenOut.decimals) : '';
+  const priceDisplay = amountIn && amountOut && !isNaN(amountOut) && tokenIn && tokenOut
     ? `1 ${tokenIn.symbol} ≈ ${(parseFloat(amountOut) / parseFloat(amountIn)).toFixed(6)} ${tokenOut.symbol}` : null;
+
+  // Show empty state when no tokens for this network (AFTER all hooks)
+  if (!tokenIn || !tokenOut) {
+    return (
+      <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
+        <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+          <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>No Tokens on {currentNetworkId === 4217 ? 'Mainnet' : 'Testnet'}</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '340px', margin: '0 auto' }}>
+            {currentNetworkId === 4217
+              ? 'Mainnet tokens have not been configured yet. Switch to Testnet to start trading.'
+              : 'No tokens available on this network.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      {modal === 'in'  && <TokenModal excludeToken={tokenOut} onSelect={t => { setTokenIn(t); }}  onClose={() => setModal(null)} />}
-      {modal === 'out' && <TokenModal excludeToken={tokenIn}  onSelect={t => { setTokenOut(t); }} onClose={() => setModal(null)} />}
+      {modal === 'in'  && <TokenModal excludeToken={tokenOut} onSelect={t => { setTokenIn(t); }}  onClose={() => setModal(null)} chainId={currentNetworkId} />}
+      {modal === 'out' && <TokenModal excludeToken={tokenIn}  onSelect={t => { setTokenOut(t); }} onClose={() => setModal(null)} chainId={currentNetworkId} />}
 
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
         <div className="swap-header">
           <div className="swap-nav">
             <button className="active">Swap</button>
-            <button>Limit</button>
           </div>
           <button onClick={() => setShowSettings(!showSettings)}
             style={{ background: 'none', border: 'none', color: showSettings ? 'var(--brand-primary)' : 'var(--text-dim)', fontSize: '18px', cursor: 'pointer' }}>⚙️</button>
@@ -244,22 +302,28 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
             <div className="input-row">
               <input type="number" className="token-input" placeholder="0" value={amountIn} onChange={e => setAmountIn(e.target.value)} />
               <button className="token-selector" onClick={() => setModal('in')}>
-                <span className="token-logo">{tokenIn.logo}</span>
+
                 <span style={{ marginLeft: '6px', fontWeight: 700 }}>{tokenIn.symbol}</span>
                 <span style={{ opacity: 0.5, fontSize: '12px', marginLeft: '4px' }}>▼</span>
               </button>
             </div>
-            <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-dim)', fontSize: '12px' }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceIn)}</strong> {tokenIn.symbol}</span>
-              {balanceIn && parseFloat(formatUnits(balanceIn.value, balanceIn.decimals)) > 0 && (
-                <button
-                onClick={() => {
-                  let bal = balanceIn?.value || 0n;
-                  if (bal > MAX_UINT128) bal = MAX_UINT128;
-                  setAmountIn(formatUnits(bal, tokenIn.decimals));
-                }}
-                style={{ background: 'var(--brand-primary-dim)', color: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.5px' }}
-              >MAX</button>
+            <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden', gap: '6px' }}>
+              <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceIn)}</strong> {tokenIn.symbol}</span>
+              {balanceIn && balanceIn.value > 0n && (
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {[25, 50, 75, 100].map(pct => (
+                    <button key={pct}
+                      onClick={() => {
+                        let bal = balanceIn?.value || 0n;
+                        if (bal > MAX_UINT128) bal = MAX_UINT128;
+                        const portion = bal * BigInt(pct) / 100n;
+                        const val = parseFloat(formatUnits(portion, tokenIn.decimals));
+                        setAmountIn(val % 1 === 0 ? val.toString() : val.toFixed(2));
+                      }}
+                      style={{ background: 'var(--brand-primary-dim)', color: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', borderRadius: '6px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
+                    >{pct}%</button>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -277,13 +341,13 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               <input type="number" className="token-input" placeholder="0" value={amountOut} readOnly
                 style={{ color: amountOut ? 'var(--text-main)' : 'var(--text-muted)' }} />
               <button className="token-selector" onClick={() => setModal('out')}>
-                <span className="token-logo" style={{ background: 'var(--brand-primary-dim)', color: 'var(--brand-primary)' }}>{tokenOut.logo}</span>
+
                 <span style={{ marginLeft: '6px', fontWeight: 700 }}>{tokenOut.symbol}</span>
                 <span style={{ opacity: 0.5, fontSize: '12px', marginLeft: '4px' }}>▼</span>
               </button>
             </div>
-            <div className="balance-row">
-              <span>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceOut)}</strong> {tokenOut.symbol}</span>
+            <div className="balance-row" style={{ overflow: 'hidden' }}>
+              <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceOut)}</strong> {tokenOut.symbol}</span>
             </div>
           </div>
 

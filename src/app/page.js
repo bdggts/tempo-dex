@@ -4,6 +4,7 @@ import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } fro
 import SwapBox from '@/components/SwapBox';
 import OrderBook from '@/components/OrderBook';
 import Balances from '@/components/Balances';
+import Earn from '@/components/Earn';
 import History from '@/components/History';
 import Guide from '@/components/Guide';
 import About from '@/components/About';
@@ -30,6 +31,7 @@ const NETWORKS = {
 const TABS = [
   { id: 'swap',    label: '⇄ Swap' },
   { id: 'orders',  label: '📋 Orders' },
+  { id: 'earn',    label: '💰 Earn' },
   { id: 'wallet',  label: '🏦 Balances' },
   { id: 'history', label: '📜 History' },
   { id: 'guide',   label: '📚 Guide' },
@@ -85,7 +87,7 @@ export default function Home() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   
-  const [targetChainId, setTargetChainId] = useState(TEMPO_MAINNET.id);
+  const [targetChainId, setTargetChainId] = useState(TEMPO_TESTNET.id);
 
   const [activeTab, setActiveTab] = useState('swap');
   const [toast, setToast] = useState('');
@@ -223,6 +225,7 @@ export default function Home() {
         <div style={{ width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {activeTab === 'swap'    && <SwapBox currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
           {activeTab === 'orders'  && <OrderBook currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
+          {activeTab === 'earn'    && <Earn currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} />}
           {activeTab === 'wallet'  && <Balances currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
           {activeTab === 'history' && <History currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} />}
           {activeTab === 'guide'   && <Guide />}
