@@ -344,95 +344,179 @@ export default function Home() {
           {activeTab === 'guide'   && <ErrorBoundary><Guide /></ErrorBoundary>}
           {activeTab === 'about'   && <ErrorBoundary><About /></ErrorBoundary>}
 
-          {/* ── Professional Footer ── */}
-          <div className="mobile-footer" style={{
-            background: 'var(--bg-panel)',
-            borderRadius: '20px',
-            border: '1px solid var(--border-light)',
-            overflow: 'hidden',
-            marginTop: '8px',
+        </div>
+      </main>
+
+      {/* ── Full-Width Professional Footer ── */}
+      <footer style={{
+        width: '100%',
+        marginTop: '48px',
+        paddingBottom: '90px', // space for mobile nav
+        position: 'relative',
+      }}>
+        {/* Gradient top border */}
+        <div style={{
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent, var(--brand-primary), var(--brand-secondary), transparent)',
+          marginBottom: '0',
+        }} />
+
+        <div style={{
+          background: 'rgba(9,9,12,0.95)',
+          backdropFilter: 'blur(20px)',
+          padding: '48px 32px 0',
+        }}>
+          {/* Main grid */}
+          <div style={{
+            maxWidth: '1100px',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '36px 24px',
           }}>
-            {/* Top section */}
-            <div style={{
-              padding: '28px 28px 20px',
-              display: 'grid',
-              gridTemplateColumns: '1.5fr 1fr 1.2fr',
-              gap: '24px',
-            }}>
-              {/* Brand */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '22px' }}>🔀</span>
-                  <span style={{ fontWeight: 800, fontSize: '16px', background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TempoSwap</span>
-                </div>
-                <p style={{ fontSize: '12px', color: 'var(--text-dim)', lineHeight: 1.6, margin: 0 }}>
-                  Decentralized exchange built on Tempo Network. Trade, earn yield, and manage assets — fully on-chain.
-                </p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
-                  <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid #34d39930' }}>✅ Gas Sponsored</span>
-                  <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid #818cf830' }}>⚡ Sub-second</span>
-                  <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid #f59e0b30' }}>🔒 Secured</span>
-                </div>
-              </div>
 
-              {/* Quick Links */}
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Quick Links</div>
+            {/* Brand Column */}
+            <div style={{ gridColumn: 'span 1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '10px',
+                  background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '18px', boxShadow: '0 0 20px rgba(255,0,122,0.3)',
+                }}>🔀</div>
+                <span style={{ fontWeight: 900, fontSize: '20px', background: 'linear-gradient(135deg, #fff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TempoSwap</span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.7, margin: '0 0 20px', maxWidth: '220px' }}>
+                The first full-featured decentralized exchange on Tempo Network. Trade, earn, and manage assets fully on-chain.
+              </p>
+              {/* Social Icons */}
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {[
-                  { label: '⇄ Swap Tokens', tab: 'swap' },
-                  { label: '📋 Order Book', tab: 'orders' },
-                  { label: '💰 Earn Yield', tab: 'earn' },
-                  { label: '🏦 My Balances', tab: 'wallet' },
-                  { label: '📜 History', tab: 'history' },
-                  { label: '📚 Guide', tab: 'guide' },
-                ].map(link => (
-                  <div key={link.tab}
-                    onClick={() => setActiveTab(link.tab)}
-                    style={{ fontSize: '13px', color: 'var(--text-dim)', marginBottom: '7px', cursor: 'pointer', transition: 'color 0.15s' }}
-                    onMouseEnter={e => e.target.style.color = 'var(--text-main)'}
-                    onMouseLeave={e => e.target.style.color = 'var(--text-dim)'}
-                  >{link.label}</div>
+                  { icon: '𝕏', label: 'Twitter', href: 'https://x.com' },
+                  { icon: '⌨', label: 'GitHub', href: 'https://github.com' },
+                  { icon: '💬', label: 'Discord', href: 'https://discord.com' },
+                  { icon: '✈️', label: 'Telegram', href: 'https://t.me' },
+                ].map(s => (
+                  <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                    title={s.label}
+                    style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: 'var(--bg-card)', border: '1px solid var(--border-light)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '16px', textDecoration: 'none', color: 'var(--text-dim)',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; e.currentTarget.style.background = 'rgba(255,0,122,0.1)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+                  >{s.icon}</a>
                 ))}
-              </div>
-
-              {/* Network Info */}
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Network</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-dim)', lineHeight: 2 }}>
-                  <div style={{ color: 'var(--text-main)', fontWeight: 600 }}>🟡 Tempo Testnet</div>
-                  <div>Chain ID: <span style={{ color: 'var(--text-main)' }}>42431</span></div>
-                  <div>DEX: <span style={{ fontFamily: 'monospace', color: '#818cf8', fontSize: '11px' }}>0xdec0...0000</span></div>
-                  <div>Registry: <span style={{ fontFamily: 'monospace', color: '#818cf8', fontSize: '11px' }}>0x1256...a641</span></div>
-                  <div style={{ marginTop: '8px' }}>
-                    <span onClick={() => setActiveTab('wallet')} style={{ fontSize: '11px', fontWeight: 700, color: '#f59e0b', cursor: 'pointer', padding: '4px 10px', borderRadius: '20px', border: '1px solid #f59e0b40', background: 'rgba(245,158,11,0.08)' }}>
-                      🚰 Get Test Tokens
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Bottom bar */}
-            <div style={{
-              padding: '14px 28px',
-              borderTop: '1px solid var(--border-light)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '8px',
-            }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
-                © {new Date().getFullYear()} TempoSwap — Built on <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>Tempo Network</span>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>📖 Price-Time Priority Orderbook</span>
-                <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>🧪 Testnet — For Testing Only</span>
+            {/* Trade Column */}
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Trade</div>
+              {[
+                { label: 'Swap Tokens', tab: 'swap' },
+                { label: 'Limit Orders', tab: 'orders' },
+                { label: 'Earn Yield', tab: 'earn' },
+                { label: 'My Balances', tab: 'wallet' },
+              ].map(link => (
+                <div key={link.tab} onClick={() => setActiveTab(link.tab)}
+                  style={{ fontSize: '13px', color: 'var(--text-dim)', marginBottom: '10px', cursor: 'pointer', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.paddingLeft = '4px'; }}
+                  onMouseLeave={e => { e.target.style.color = 'var(--text-dim)'; e.target.style.paddingLeft = '0'; }}
+                >{link.label}</div>
+              ))}
+            </div>
+
+            {/* Learn Column */}
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Learn</div>
+              {[
+                { label: 'Getting Started', tab: 'guide' },
+                { label: 'Trade History', tab: 'history' },
+                { label: 'About TempoSwap', tab: 'about' },
+                { label: 'Get Test Tokens', tab: 'wallet' },
+              ].map(link => (
+                <div key={link.label} onClick={() => setActiveTab(link.tab)}
+                  style={{ fontSize: '13px', color: 'var(--text-dim)', marginBottom: '10px', cursor: 'pointer', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.target.style.color = '#fff'; e.target.style.paddingLeft = '4px'; }}
+                  onMouseLeave={e => { e.target.style.color = 'var(--text-dim)'; e.target.style.paddingLeft = '0'; }}
+                >{link.label}</div>
+              ))}
+            </div>
+
+            {/* Network Column */}
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Network</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-dim)', lineHeight: 1.9 }}>
+                <div style={{ marginBottom: '6px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '20px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#f59e0b', fontWeight: 600, fontSize: '12px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block', boxShadow: '0 0 6px #f59e0b' }} />
+                    Tempo Testnet
+                  </span>
+                </div>
+                <div>Chain ID: <span style={{ color: '#a5b4fc', fontFamily: 'monospace' }}>42431</span></div>
+                <div>DEX: <span style={{ color: '#a5b4fc', fontFamily: 'monospace', fontSize: '11px' }}>0xdec0...0000</span></div>
+                <div style={{ marginTop: '10px' }}>
+                  <a href="https://explore.testnet.tempo.xyz" target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '12px', color: 'var(--brand-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >🔍 Explorer ↗</a>
+                </div>
+                <div style={{ marginTop: '6px' }}>
+                  <a href="https://tempo.xyz" target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    onMouseEnter={e => e.target.style.color = '#fff'}
+                    onMouseLeave={e => e.target.style.color = 'var(--text-dim)'}
+                  >🌐 Tempo Network ↗</a>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Stats bar */}
+          <div style={{
+            maxWidth: '1100px', margin: '36px auto 0',
+            display: 'flex', gap: '24px', flexWrap: 'wrap', justifyContent: 'center',
+            padding: '20px 0',
+            borderTop: '1px solid var(--border-light)',
+            borderBottom: '1px solid var(--border-light)',
+          }}>
+            {[
+              { value: '< 1s', label: 'Block Time' },
+              { value: '0', label: 'Gas Fees' },
+              { value: '∞', label: 'Liquidity Depth' },
+              { value: '100%', label: 'On-Chain' },
+            ].map(stat => (
+              <div key={stat.label} style={{ textAlign: 'center', flex: '1', minWidth: '100px' }}>
+                <div style={{ fontSize: '22px', fontWeight: 900, background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{stat.value}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom copyright bar */}
+          <div style={{
+            maxWidth: '1100px', margin: '0 auto',
+            padding: '18px 0',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            flexWrap: 'wrap', gap: '10px',
+          }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              © {new Date().getFullYear()} <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>TempoSwap</span>. All rights reserved. Built on Tempo Network.
+            </div>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              {[
+                { label: '📖 Price-Time Priority Orderbook' },
+                { label: '🧪 Testnet — Not Financial Advice' },
+              ].map(item => (
+                <span key={item.label} style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.label}</span>
+              ))}
+            </div>
+          </div>
         </div>
-      </main>
+      </footer>
 
       {/* Mobile Bottom Navigation */}
       <nav className="mobile-bottom-nav">
