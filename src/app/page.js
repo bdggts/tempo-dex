@@ -288,6 +288,41 @@ export default function Home() {
       {/* Main */}
       <main>
         <div style={{ width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* Wrong Network Banner — tap to switch */}
+          {isConnected && !isCorrectNetwork && (
+            <div style={{
+              background: 'rgba(255,71,87,0.12)',
+              border: '1px solid rgba(255,71,87,0.4)',
+              borderRadius: '16px',
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+            }}>
+              <span style={{ fontSize: '14px', color: '#ff4757', fontWeight: 600 }}>
+                ⚠️ Wrong Network
+              </span>
+              <button
+                onClick={() => switchOrAddNetwork(targetChainId)}
+                style={{
+                  background: '#ff4757',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '8px 16px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Switch to Tempo Testnet →
+              </button>
+            </div>
+          )}
+
           {activeTab === 'swap'    && <SwapBox currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
           {activeTab === 'orders'  && <OrderBook currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
           {activeTab === 'earn'    && <Earn currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} />}
