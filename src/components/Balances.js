@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
-
 import { formatUnits } from 'viem';
-import { TOKENS, getTokensForChain } from '@/config/web3';
+import { ERC20_ABI, TOKENS, getTokensForChain } from '@/config/web3';
+
 
 
 
@@ -16,11 +16,10 @@ const TOKEN_COLORS = {
 };
 
 function TokenBalance({ token, address, currentNetworkId, index }) {
-  const DEX_ERC20_ABI = [{ name: 'balanceOf', type: 'function', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'uint256' }] }];
 
   const { data: rawBalance } = useReadContract({
     address: token.address,
-    abi: DEX_ERC20_ABI,
+    abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     chainId: currentNetworkId,
