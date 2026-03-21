@@ -131,6 +131,7 @@ export default function Home() {
   const [toast, setToast] = useState('');
   const [mounted, setMounted] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [dismissedNetworkAlert, setDismissedNetworkAlert] = useState(false);
 
   // Fix hydration mismatch — wait for client mount
   useEffect(() => { setMounted(true); }, []);
@@ -213,8 +214,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Wrong Network — fullscreen blocking overlay */}
-      {isConnected && !isCorrectNetwork && (
+      {/* Wrong Network — fullscreen blocking overlay (not on guide/about) */}
+      {isConnected && !isCorrectNetwork && !dismissedNetworkAlert && !['guide','about'].includes(activeTab) && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9998,
           background: 'rgba(9,9,12,0.97)',
@@ -242,9 +243,14 @@ export default function Home() {
           >
             🔀 Switch to Tempo Testnet
           </button>
+          <button onClick={() => { setActiveTab('guide'); setDismissedNetworkAlert(true); }}
+            style={{ marginTop: '14px', background: 'none', border: 'none', color: '#818cf8', fontSize: '13px', cursor: 'pointer', padding: '8px', fontWeight: 600 }}
+          >
+            📚 How to add network manually
+          </button>
           <button
             onClick={() => disconnect()}
-            style={{ marginTop: '16px', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '13px', cursor: 'pointer', padding: '8px' }}
+            style={{ marginTop: '8px', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '12px', cursor: 'pointer', padding: '8px' }}
           >
             Disconnect wallet
           </button>
