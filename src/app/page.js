@@ -31,6 +31,15 @@ const TABS = [
   { id: 'about',   label: 'ℹ️ About' },
 ];
 
+// Mobile bottom nav — only 5 most important tabs
+const MOBILE_TABS = [
+  { id: 'swap',    icon: '⇄', label: 'Swap' },
+  { id: 'orders',  icon: '📋', label: 'Orders' },
+  { id: 'earn',    icon: '💰', label: 'Earn' },
+  { id: 'wallet',  icon: '🏦', label: 'Wallet' },
+  { id: 'history', icon: '📜', label: 'History' },
+];
+
 // ── Wallet Selector Modal ──────────────────────────────────────────────────
 function WalletModal({ connectors, connect, onClose }) {
   return (
@@ -328,6 +337,20 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-bottom-nav">
+        {MOBILE_TABS.map(tab => (
+          <button
+            key={tab.id}
+            className={activeTab === tab.id ? 'active' : ''}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <span className="nav-icon">{tab.icon}</span>
+            <span className="nav-label">{tab.label}</span>
+          </button>
+        ))}
+      </nav>
     </>
   );
 }
