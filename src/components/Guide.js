@@ -155,16 +155,32 @@ export default function Guide() {
                     </div>
                     {net.chainParams && (
                       <button
-                        onClick={(e) => {
+                      onClick={async (e) => {
                           e.stopPropagation();
-                          if (typeof window !== 'undefined' && window.ethereum) {
-                            window.ethereum.request({
-                              method: 'wallet_addEthereumChain',
-                              params: [net.chainParams],
-                            }).then(() => alert(`✅ ${net.chainParams.chainName} added to MetaMask!`))
-                              .catch((err) => alert(`⚠️ Error: ${err.message || 'Could not add network'}`));
-                          } else {
-                            alert('🦊 Please install MetaMask first!');
+                          const provider = typeof window !== 'undefined' && window.ethereum;
+                          if (!provider) { alert('🦊 Please install MetaMask first!'); return; }
+                          try {
+                            // Try switch first — handles already-added networks
+                            await provider.request({
+                              method: 'wallet_switchEthereumChain',
+                              params: [{ chainId: net.chainParams.chainId }],
+                            });
+                            alert(`✅ Switched to ${net.chainParams.chainName}!`);
+                          } catch (switchErr) {
+                            if (switchErr.code === 4902 || switchErr.code === -32603) {
+                              // Not found — add it
+                              try {
+                                await provider.request({
+                                  method: 'wallet_addEthereumChain',
+                                  params: [net.chainParams],
+                                });
+                                alert(`✅ ${net.chainParams.chainName} added to MetaMask!`);
+                              } catch (addErr) {
+                                alert(`❌ ${addErr.message || 'Could not add network'}`);
+                              }
+                            } else {
+                              alert(`❌ ${switchErr.message || 'Could not switch network'}`);
+                            }
                           }
                         }}
                         style={{
