@@ -212,10 +212,10 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
             <label style={{ fontSize: '12px', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Token</label>
             <select
               value={selectedToken.symbol}
-              onChange={(e) => setSelectedToken(getTokensForChain(currentNetworkId).find(t => t.symbol === e.target.value))}
+              onChange={(e) => setSelectedToken(networkTokens.find(t => t.symbol === e.target.value))}
               style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-main)', padding: '10px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 600 }}
             >
-              {getTokensForChain(currentNetworkId).map(t => <option key={t.symbol} value={t.symbol}>{t.logo} {t.symbol}</option>)}
+              {networkTokens.map(t => <option key={t.symbol} value={t.symbol}>{t.logo} {t.symbol}</option>)}
             </select>
           </div>
 
