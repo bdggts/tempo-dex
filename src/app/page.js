@@ -141,36 +141,19 @@ export default function Home() {
     const targetNetwork = NETWORKS[chainIdToConnect];
     if (!targetNetwork) return;
     const provider = typeof window !== 'undefined' && (window.ethereum || window.web3?.currentProvider);
-    if (!provider) { if (switchChain) switchChain({ chainId: chainIdToConnect }); return; }
+    if (!provider) { try { switchChain?.({ chainId: chainIdToConnect }); } catch {} return; }
     try {
-      // wallet_addEthereumChain handles BOTH add AND switch in one call
-      // MetaMask: if network already added, it just switches; if new, it adds then switches
-      await provider.request({
-        method: 'wallet_addEthereumChain',
-        params: [targetNetwork],
-      });
+      await provider.request({ method: 'wallet_addEthereumChain', params: [targetNetwork] });
       showToast(`✅ Switched to ${targetNetwork.chainName}`);
-    } catch (err) {
-      // Fallback: try switch only
+    } catch (addErr) {
       try {
-        await provider.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetNetwork.chainId }],
-        });
+        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetNetwork.chainId }] });
         showToast(`✅ Switched to ${targetNetwork.chainName}`);
       } catch {
-        showToast(`⚠️ Please add Tempo Testnet (Chain ID: ${chainIdToConnect}) manually in MetaMask`);
+        showToast(`❌ Could not switch. Please change network inside MetaMask manually.`);
       }
     }
   };
-
-  // Auto-switch to Tempo Testnet as soon as wallet is connected on wrong network
-  useEffect(() => {
-    if (isConnected && chainId !== targetChainId) {
-      switchOrAddNetwork(targetChainId);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected]);
 
 
   const handleNetworkChange = (e) => {
@@ -227,6 +210,44 @@ export default function Home() {
       {toast && (
         <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: 'var(--bg-panel)', border: '1px solid var(--border-light)', padding: '12px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, zIndex: 1000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)', animation: 'fadeInUp 0.3s ease', whiteSpace: 'nowrap' }}>
           {toast}
+        </div>
+      )}
+
+      {/* Wrong Network — fullscreen blocking overlay */}
+      {isConnected && !isCorrectNetwork && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          background: 'rgba(9,9,12,0.97)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          padding: '24px',
+          backdropFilter: 'blur(8px)',
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔴</div>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Wrong Network</h2>
+          <p style={{ color: 'var(--text-dim)', textAlign: 'center', marginBottom: '32px', fontSize: '15px', lineHeight: 1.6, maxWidth: '300px' }}>
+            TempoSwap runs on <strong style={{ color: 'white' }}>Tempo Testnet</strong>.<br />
+            Tap below to switch automatically.
+          </p>
+          <button
+            onClick={() => switchOrAddNetwork(targetChainId)}
+            style={{
+              background: 'linear-gradient(135deg, var(--brand-primary), #ff6b35)',
+              color: 'white', border: 'none', borderRadius: '16px',
+              padding: '18px 40px', fontSize: '18px', fontWeight: 800,
+              cursor: 'pointer', width: '100%', maxWidth: '320px',
+              boxShadow: '0 8px 32px rgba(255,0,122,0.4)',
+              letterSpacing: '0.3px',
+            }}
+          >
+            🔀 Switch to Tempo Testnet
+          </button>
+          <button
+            onClick={() => disconnect()}
+            style={{ marginTop: '16px', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '13px', cursor: 'pointer', padding: '8px' }}
+          >
+            Disconnect wallet
+          </button>
         </div>
       )}
 
@@ -289,40 +310,6 @@ export default function Home() {
       {/* Main */}
       <main>
         <div style={{ width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-          {/* Wrong Network Banner — tap to switch */}
-          {isConnected && !isCorrectNetwork && (
-            <div style={{
-              background: 'rgba(255,71,87,0.12)',
-              border: '1px solid rgba(255,71,87,0.4)',
-              borderRadius: '16px',
-              padding: '14px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-            }}>
-              <span style={{ fontSize: '14px', color: '#ff4757', fontWeight: 600 }}>
-                ⚠️ Wrong Network
-              </span>
-              <button
-                onClick={() => switchOrAddNetwork(targetChainId)}
-                style={{
-                  background: '#ff4757',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '8px 16px',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Switch to Tempo Testnet →
-              </button>
-            </div>
-          )}
 
           {activeTab === 'swap'    && <SwapBox currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
           {activeTab === 'orders'  && <OrderBook currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
