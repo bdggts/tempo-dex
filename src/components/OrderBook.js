@@ -41,16 +41,30 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
   });
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
 
-  // Read Wallet Balance via balanceOf — same as Earn.js (useBalance gives wrong decimals on Tempo chain)
+  // Read BOTH selectedToken balance AND pUSD balance separately
   const quoteToken = getTokensForChain(currentNetworkId).find(t => t.isQuoteToken);
-  const balanceToken = selectedToken ? (isBid ? (quoteToken || selectedToken) : selectedToken) : null;
-  const { data: rawBalData } = useReadContract({
-    address: balanceToken?.address, abi: ERC20_ABI,
+
+  // Selected token balance (always read — shown in both BUY and SELL)
+  const { data: rawSelectedBal } = useReadContract({
+    address: selectedToken?.address, abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    query: { enabled: !!address && !!balanceToken, refetchInterval: 5000 },
+    query: { enabled: !!address && !!selectedToken, refetchInterval: 5000 },
     chainId: currentNetworkId,
   });
+
+  // pUSD balance (for BUY mode — this is what user spends)
+  const { data: rawPusdBal } = useReadContract({
+    address: quoteToken?.address, abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!quoteToken, refetchInterval: 5000 },
+    chainId: currentNetworkId,
+  });
+
+  // For % buttons: use pUSD in BUY, selectedToken in SELL
+  const rawBalData = isBid ? rawPusdBal : rawSelectedBal;
+  const balanceToken = isBid ? (quoteToken || selectedToken) : selectedToken;
 
   const formatBal = (raw, token) => {
     if (raw == null || !token) return '0';
@@ -226,7 +240,12 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
             style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-main)', padding: '12px 16px', borderRadius: '10px', fontSize: '20px', fontWeight: 600 }}
           />
           <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', overflow: 'hidden', gap: '6px' }}>
-            <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(rawBalData, balanceToken)}</strong> {balanceToken.symbol}</span>
+            <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+              {selectedToken.symbol}: <strong style={{ color: 'var(--text-main)' }}>{formatBal(rawSelectedBal, selectedToken)}</strong>
+              {isBid && quoteToken && (
+                <span style={{ marginLeft: '8px' }}>| pUSD: <strong style={{ color: '#f59e0b' }}>{formatBal(rawPusdBal, quoteToken)}</strong></span>
+              )}
+            </span>
             {rawBalData != null && rawBalData > 0n && (
               <div style={{ display: 'flex', gap: '4px' }}>
                 {[25, 50, 75, 100].map(pct => (
