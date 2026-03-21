@@ -42,14 +42,48 @@ const MOBILE_TABS = [
 
 // ── Wallet Selector Modal ──────────────────────────────────────────────────
 function WalletModal({ connectors, connect, onClose }) {
+  // Detect mobile without MetaMask injected
+  const isMobile = typeof window !== 'undefined' && /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const hasEthereum = typeof window !== 'undefined' && !!window.ethereum;
+  const showDeepLink = isMobile && !hasEthereum;
+
+  const siteUrl = typeof window !== 'undefined' ? window.location.host : 'tempo-dex.vercel.app';
+  const metamaskDeepLink = `https://metamask.app.link/dapp/${siteUrl}`;
+
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: '24px', width: '380px', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', animation: 'fadeInUp 0.3s ease' }}>
+      <div onClick={e => e.stopPropagation()} className="wallet-modal-inner" style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: '24px', width: '380px', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', animation: 'fadeInUp 0.3s ease' }}>
         <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: '18px' }}>Connect a Wallet</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '28px', cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
+
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+          {/* Mobile Chrome — show MetaMask deep link first */}
+          {showDeepLink && (
+            <a
+              href={metamaskDeepLink}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '16px', width: '100%',
+                padding: '16px', borderRadius: '16px', textDecoration: 'none',
+                background: 'rgba(255, 107, 0, 0.12)',
+                border: '1px solid rgba(255, 107, 0, 0.4)',
+                color: 'var(--text-main)', transition: '0.2s',
+              }}
+            >
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,107,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                🦊
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '16px' }}>Open in MetaMask</div>
+                <div style={{ fontSize: '12px', color: '#f97316' }}>Tap to open & connect MetaMask app</div>
+              </div>
+              <span style={{ fontSize: '18px', color: '#f97316' }}>→</span>
+            </a>
+          )}
+
+          {/* Regular connectors */}
           {connectors.map((connector) => (
             <button
               key={connector.uid}
@@ -59,21 +93,22 @@ function WalletModal({ connectors, connect, onClose }) {
               style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-light)', background: 'none', color: 'var(--text-main)', cursor: 'pointer', transition: '0.2s', textAlign: 'left' }}
             >
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                {connector.name.toLowerCase().includes('metamask') ? '🦊' : 
-                 connector.name.toLowerCase().includes('coinbase') ? '🛡️' : 
+                {connector.name.toLowerCase().includes('metamask') ? '🦊' :
+                 connector.name.toLowerCase().includes('coinbase') ? '🛡️' :
                  connector.name.toLowerCase().includes('walletconnect') ? '🌐' : '🔌'}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>{connector.name}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
-                  {connector.name.toLowerCase().includes('metamask') ? 'Connect to your MetaMask Wallet' : 
-                   connector.name.toLowerCase().includes('coinbase') ? 'Connect to Coinbase Wallet' : 
-                   connector.name.toLowerCase().includes('walletconnect') ? 'Scan with your mobile wallet' : 'Standard Web3 Wallet'}
+                  {connector.name.toLowerCase().includes('metamask') ? 'Connect to your MetaMask Wallet' :
+                   connector.name.toLowerCase().includes('coinbase') ? 'Connect to Coinbase Wallet' :
+                   connector.name.toLowerCase().includes('walletconnect') ? 'Scan QR with your mobile wallet' : 'Standard Web3 Wallet'}
                 </div>
               </div>
             </button>
           ))}
         </div>
+
         <div style={{ padding: '16px 24px', background: 'var(--bg-card)', fontSize: '12px', color: 'var(--text-dim)', textAlign: 'center', borderTop: '1px solid var(--border-light)' }}>
           By connecting a wallet, you agree to Tempo's Terms of Service.
         </div>
