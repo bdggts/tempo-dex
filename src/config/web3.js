@@ -30,9 +30,18 @@ export const TEMPO_MAINNET = {
 export const wagmiConfig = createConfig({
   chains: [TEMPO_TESTNET],
   connectors: [
-    injected(),
-    coinbaseWallet({ appName: 'TempoSwap' }),
-    walletConnect({ projectId: 'c5e3d79f001c90299e1208d2a6a666e1' }),
+    injected({ shimDisconnect: true }),
+    coinbaseWallet({ appName: 'TempoSwap', appLogoUrl: 'https://tempo-dex.vercel.app/favicon.ico' }),
+    walletConnect({
+      projectId: 'c5e3d79f001c90299e1208d2a6a666e1',
+      metadata: {
+        name: 'TempoSwap',
+        description: 'Decentralized exchange on Tempo Network',
+        url: 'https://tempo-dex.vercel.app',
+        icons: ['https://tempo-dex.vercel.app/favicon.ico'],
+      },
+      showQrModal: true,
+    }),
   ],
   transports: {
     [TEMPO_TESTNET.id]: http('https://rpc.moderato.tempo.xyz', { timeout: 15000, retryCount: 2 }),
