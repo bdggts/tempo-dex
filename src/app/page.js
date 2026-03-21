@@ -392,8 +392,8 @@ export default function Home() {
               {/* Social Icons */}
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {[
-                  { icon: '𝕏', label: 'Twitter', href: 'https://x.com' },
-                  { icon: '⌨', label: 'GitHub', href: 'https://github.com' },
+                  { icon: '𝕏', label: 'Twitter', href: 'https://x.com/bdggts' },
+                  { icon: '⌨', label: 'GitHub', href: 'https://github.com/bdggts' },
                   { icon: '💬', label: 'Discord', href: 'https://discord.com' },
                   { icon: '✈️', label: 'Telegram', href: 'https://t.me' },
                 ].map(s => (
@@ -504,7 +504,8 @@ export default function Home() {
             flexWrap: 'wrap', gap: '10px',
           }}>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              © {new Date().getFullYear()} <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>TempoSwap</span>. All rights reserved. Built on Tempo Network.
+              © {new Date().getFullYear()} <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>TempoSwap</span>. All rights reserved. Built on Tempo Network. &nbsp;·&nbsp;
+              Made by <a href="https://x.com/bdggts" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-primary)', fontWeight: 700, textDecoration: 'none' }}>@bdggts</a>
             </div>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               {[
