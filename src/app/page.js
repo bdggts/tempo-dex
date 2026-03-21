@@ -38,6 +38,7 @@ const MOBILE_TABS = [
   { id: 'earn',    icon: '💰', label: 'Earn' },
   { id: 'wallet',  icon: '🏦', label: 'Wallet' },
   { id: 'history', icon: '📜', label: 'History' },
+  { id: 'guide',   icon: '📚', label: 'Guide' },
 ];
 
 // ── Wallet Selector Modal ──────────────────────────────────────────────────
