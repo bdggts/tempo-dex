@@ -40,7 +40,7 @@ const STEPS = [
         label: '🟠 Testnet',
         color: '#f39c12',
         chainParams: {
-          chainId: '0xa5cf',
+          chainId: '0xa5bf',
           chainName: 'Tempo Testnet',
           nativeCurrency: { name: 'USD', symbol: 'USD', decimals: 18 },
           rpcUrls: ['https://rpc.moderato.tempo.xyz'],

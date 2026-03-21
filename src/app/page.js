@@ -136,6 +136,15 @@ export default function Home() {
   // Fix hydration mismatch — wait for client mount
   useEffect(() => { setMounted(true); }, []);
 
+  // Reload on MetaMask network change so wagmi chainId syncs correctly
+  // (MetaMask best practice — wagmi doesn't always pick up manual chain switch)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.ethereum) return;
+    const handleChainChange = () => window.location.reload();
+    window.ethereum.on('chainChanged', handleChainChange);
+    return () => window.ethereum.removeListener('chainChanged', handleChainChange);
+  }, []);
+
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 4000); };
 
   const switchOrAddNetwork = async (chainIdToConnect) => {
