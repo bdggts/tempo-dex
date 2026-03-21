@@ -40,6 +40,7 @@ function TokenBalance({ token, address, currentNetworkId, index }) {
   const numericBalance = rawBalance != null ? parseFloat(formatUnits(rawBalance, decimals)) : null;
   const formattedWallet = numericBalance != null ? fmtNum(numericBalance) : '—';
   const hasBalance = rawBalance != null && rawBalance > 0n;
+  const colors = TOKEN_COLORS[token.symbol] || TOKEN_COLORS.pUSD;
 
   return (
     <div style={{ 
