@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useChainId, useSwitchChain } from 'wagmi';
+import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, getTokensForChain } from '@/config/web3';
 
@@ -80,30 +80,38 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     setAmountIn('');
   }, [currentNetworkId]);
 
-  // Read Wallet Balances
-  const { data: balanceIn } = useBalance({ address, token: tokenIn?.address, chainId: currentNetworkId, query: { enabled: !!address && !!tokenIn, refetchInterval: 5000 } });
-  const { data: balanceOut } = useBalance({ address, token: tokenOut?.address, chainId: currentNetworkId, query: { enabled: !!address && !!tokenOut, refetchInterval: 5000 } });
-  
-  const formatBal = (balData) => {
-    if (!balData) return '0';
+  // Read Wallet Balances directly via balanceOf — same as Earn.js (useBalance gives wrong decimals on Tempo)
+  const { data: rawBalIn } = useReadContract({
+    address: tokenIn?.address, abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!tokenIn, refetchInterval: 5000 },
+    chainId: currentNetworkId,
+  });
+  const { data: rawBalOut } = useReadContract({
+    address: tokenOut?.address, abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!tokenOut, refetchInterval: 5000 },
+    chainId: currentNetworkId,
+  });
+
+  // Format balance using known decimals from TOKENS config (not from chain response)
+  const formatBal = (raw, token) => {
+    if (raw == null || !token) return '0';
     try {
-      const raw = balData.value;
-      if (raw === 0n) return '0';
-      // Convert to string without scientific notation
-      const fullStr = formatUnits(raw, balData.decimals);
-      // Parse the integer part length to determine suffix
-      const parts = fullStr.split('.');
-      const intPart = parts[0];
-      const len = intPart.length;
-      if (len > 15) return intPart.slice(0, len - 15) + '.' + intPart.slice(len - 15, len - 13) + 'Q';
-      if (len > 12) return intPart.slice(0, len - 12) + '.' + intPart.slice(len - 12, len - 10) + 'T';
-      if (len > 9)  return intPart.slice(0, len - 9)  + '.' + intPart.slice(len - 9,  len - 7)  + 'B';
-      if (len > 6)  return intPart.slice(0, len - 6)  + '.' + intPart.slice(len - 6,  len - 4)  + 'M';
-      if (len > 3)  return intPart.slice(0, len - 3)  + '.' + intPart.slice(len - 3,  len - 1)  + 'K';
+      const decimals = token.decimals ?? 6;
+      const fullStr = formatUnits(raw, decimals);
       const val = parseFloat(fullStr);
-      return val.toFixed(2);
+      if (!isFinite(val)) return '0';
+      if (val >= 1e12) return (val / 1e12).toFixed(2) + 'T';
+      if (val >= 1e9)  return (val / 1e9).toFixed(2)  + 'B';
+      if (val >= 1e6)  return (val / 1e6).toFixed(2)  + 'M';
+      if (val >= 1e3)  return (val / 1e3).toFixed(2)  + 'K';
+      return val.toLocaleString(undefined, { maximumFractionDigits: 4 });
     } catch { return '0'; }
   };
+
 
   // Safe parseUnits — handles scientific notation like 8.5e+31
   const safeParseUnits = (value, decimals) => {
@@ -328,13 +336,13 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               </button>
             </div>
             <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden', gap: '6px' }}>
-              <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceIn)}</strong> {tokenIn.symbol}</span>
-              {balanceIn && balanceIn.value > 0n && (
+              <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(rawBalIn, tokenIn)}</strong> {tokenIn.symbol}</span>
+              {rawBalIn != null && rawBalIn > 0n && (
                 <div style={{ display: 'flex', gap: '4px' }}>
                   {[25, 50, 75, 100].map(pct => (
                     <button key={pct}
                       onClick={() => {
-                        let bal = balanceIn?.value || 0n;
+                        let bal = rawBalIn || 0n;
                         if (bal > MAX_UINT128) bal = MAX_UINT128;
                         const portion = bal * BigInt(pct) / 100n;
                         const val = parseFloat(formatUnits(portion, tokenIn.decimals));
@@ -367,7 +375,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               </button>
             </div>
             <div className="balance-row" style={{ overflow: 'hidden' }}>
-              <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(balanceOut)}</strong> {tokenOut.symbol}</span>
+              <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>Balance: <strong style={{ color: 'var(--text-main)' }}>{formatBal(rawBalOut, tokenOut)}</strong> {tokenOut.symbol}</span>
             </div>
           </div>
 
