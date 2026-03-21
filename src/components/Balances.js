@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { useAccount, useBalance } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
+
 import { formatUnits } from 'viem';
 import { TOKENS, getTokensForChain } from '@/config/web3';
 
@@ -15,11 +16,15 @@ const TOKEN_COLORS = {
 };
 
 function TokenBalance({ token, address, currentNetworkId, index }) {
-  const { data: walletBalance } = useBalance({ 
-    address, 
-    token: token.address, 
-    chainId: currentNetworkId, 
-    query: { enabled: !!address, refetchInterval: 5000 } 
+  const DEX_ERC20_ABI = [{ name: 'balanceOf', type: 'function', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'uint256' }] }];
+
+  const { data: rawBalance } = useReadContract({
+    address: token.address,
+    abi: DEX_ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    chainId: currentNetworkId,
+    query: { enabled: !!address, refetchInterval: 5000 },
   });
 
   const fmtNum = (val) => {
@@ -29,27 +34,13 @@ function TokenBalance({ token, address, currentNetworkId, index }) {
     if (val >= 1e9) return (val / 1e9).toFixed(2) + 'B';
     if (val >= 1e6) return (val / 1e6).toFixed(2) + 'M';
     if (val >= 1e3) return (val / 1e3).toFixed(2) + 'K';
-    return val.toFixed(2);
+    return val.toLocaleString(undefined, { maximumFractionDigits: 4 });
   };
 
-  const formattedWallet = walletBalance !== undefined
-    ? (() => {
-        try {
-          const fullStr = formatUnits(walletBalance.value, walletBalance.decimals);
-          const intPart = fullStr.split('.')[0];
-          const len = intPart.length;
-          if (len > 15) return intPart.slice(0, len - 15) + '.' + intPart.slice(len - 15, len - 13) + 'Q';
-          if (len > 12) return intPart.slice(0, len - 12) + '.' + intPart.slice(len - 12, len - 10) + 'T';
-          if (len > 9)  return intPart.slice(0, len - 9)  + '.' + intPart.slice(len - 9,  len - 7)  + 'B';
-          if (len > 6)  return intPart.slice(0, len - 6)  + '.' + intPart.slice(len - 6,  len - 4)  + 'M';
-          if (len > 3)  return intPart.slice(0, len - 3)  + '.' + intPart.slice(len - 3,  len - 1)  + 'K';
-          return parseFloat(fullStr).toFixed(2);
-        } catch { return '0'; }
-      })()
-    : '—';
-
-  const colors = TOKEN_COLORS[token.symbol] || TOKEN_COLORS.pUSD;
-  const hasBalance = walletBalance !== undefined && walletBalance.value > 0n;
+  const decimals = token.decimals ?? 6;
+  const numericBalance = rawBalance != null ? parseFloat(formatUnits(rawBalance, decimals)) : null;
+  const formattedWallet = numericBalance != null ? fmtNum(numericBalance) : '—';
+  const hasBalance = rawBalance != null && rawBalance > 0n;
 
   return (
     <div style={{ 
