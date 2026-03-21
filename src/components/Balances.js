@@ -23,7 +23,7 @@ function TokenBalance({ token, address, currentNetworkId, index }) {
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     chainId: currentNetworkId,
-    query: { enabled: !!address, refetchInterval: 5000 },
+    query: { enabled: !!address, refetchInterval: 12000 },
   });
 
   const fmtNum = (val) => {

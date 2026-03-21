@@ -1,0 +1,30 @@
+name: 🛡️ Security Monitor (Auto-Pause)
+
+# Run every 10 minutes, 24/7 — completely free on GitHub
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # every 10 minutes
+  workflow_dispatch:           # also allow manual trigger from GitHub UI
+
+jobs:
+  monitor:
+    name: Check Contract Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install ethers dotenv
+
+      - name: Run security check
+        env:
+          DEPLOY_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+        run: node scripts/gh-monitor.mjs

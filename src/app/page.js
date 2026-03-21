@@ -8,6 +8,7 @@ import Earn from '@/components/Earn';
 import History from '@/components/History';
 import Guide from '@/components/Guide';
 import About from '@/components/About';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { TEMPO_TESTNET } from '@/config/web3';
 
 // Format networks for MetaMask
@@ -335,13 +336,13 @@ export default function Home() {
       <main>
         <div style={{ width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-          {activeTab === 'swap'    && <SwapBox currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
-          {activeTab === 'orders'  && <OrderBook currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
-          {activeTab === 'earn'    && <Earn currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} />}
-          {activeTab === 'wallet'  && <Balances currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} />}
-          {activeTab === 'history' && <History currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} />}
-          {activeTab === 'guide'   && <Guide />}
-          {activeTab === 'about'   && <About />}
+          {activeTab === 'swap'    && <ErrorBoundary><SwapBox currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} /></ErrorBoundary>}
+          {activeTab === 'orders'  && <ErrorBoundary><OrderBook currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} /></ErrorBoundary>}
+          {activeTab === 'earn'    && <ErrorBoundary><Earn currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} /></ErrorBoundary>}
+          {activeTab === 'wallet'  && <ErrorBoundary><Balances currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} /></ErrorBoundary>}
+          {activeTab === 'history' && <ErrorBoundary><History currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} /></ErrorBoundary>}
+          {activeTab === 'guide'   && <ErrorBoundary><Guide /></ErrorBoundary>}
+          {activeTab === 'about'   && <ErrorBoundary><About /></ErrorBoundary>}
 
           {/* ── Professional Footer ── */}
           <div className="mobile-footer" style={{

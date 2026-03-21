@@ -79,11 +79,15 @@ contract DepositRegistry {
     mapping(address => uint256)   public userTotalDeposited;
     uint256 public totalDepositCount;
 
+    // Auto-yield tracking — tracks last claim time per deposit
+    mapping(address => mapping(uint256 => uint256)) public lastClaimedAt;
+
     // ── Events ─────────────────────────────────────────────────────────────────
     event Deposited(address indexed user, address indexed token, uint256 amount, LockPeriod lockPeriod, uint256 unlockTime, uint256 depositIndex);
     event Withdrawn(address indexed user, uint256 depositIndex, uint256 amount, uint256 yieldEarned);
     event PartialWithdrawn(address indexed user, uint256 depositIndex, uint256 amount);
     event YieldCredited(address indexed user, uint256 depositIndex, uint256 yieldAmt);
+    event YieldClaimed(address indexed user, uint256 depositIndex, uint256 yieldAmt);
     event AdminChanged(address indexed oldAdmin, address indexed newAdmin);
     event Paused(address indexed by);
     event Unpaused(address indexed by);
@@ -190,6 +194,31 @@ contract DepositRegistry {
         require(IERC20(token).transfer(to, bal), "rescue failed");
     }
 
+    // ── Auto-Yield Helpers ─────────────────────────────────────────────────────
+
+    /// @dev Returns APY in basis points (300 = 3%, 1500 = 15%)
+    function _getAPY(LockPeriod period) internal pure returns (uint256) {
+        if (period == LockPeriod.Flexible) return APY_FLEXIBLE;
+        if (period == LockPeriod.Q1)       return APY_Q1;
+        if (period == LockPeriod.Q2)       return APY_Q2;
+        if (period == LockPeriod.Q3)       return APY_Q3;
+        return APY_Q4;
+    }
+
+    /// @notice Real-time pending yield for a deposit (auto-calculated from APY)
+    /// @dev yield = (amount * APY_bps * secondsElapsed) / (365 days * 10000)
+    function pendingYield(address user, uint256 depositIndex) public view returns (uint256) {
+        Deposit storage dep = userDeposits[user][depositIndex];
+        if (!dep.active || dep.amount == 0) return 0;
+        uint256 since   = lastClaimedAt[user][depositIndex];
+        if (since == 0) since = dep.depositTime;
+        if (block.timestamp <= since) return 0;
+        uint256 elapsed = block.timestamp - since;
+        uint256 apy     = _getAPY(dep.lockPeriod);
+        // yield = principal * APY% * time / year
+        return (dep.amount * apy * elapsed) / (365 days * 10_000);
+    }
+
     // ── User: Deposit ──────────────────────────────────────────────────────────
 
     function registerDeposit(address token, uint256 amount, LockPeriod period)
@@ -212,8 +241,11 @@ contract DepositRegistry {
             active:      true
         }));
         depositIndex = userDeposits[msg.sender].length - 1;
+        // Start auto-yield accrual from deposit time
+        lastClaimedAt[msg.sender][depositIndex] = block.timestamp;
         totalDepositCount++;
         totalDepositedByToken[token]   += amount;
+
         userTotalDeposited[msg.sender] += amount;
 
         emit Deposited(msg.sender, token, amount, period, unlockAt, depositIndex);
@@ -234,9 +266,11 @@ contract DepositRegistry {
         );
 
         uint256 principal = dep.amount;
-        uint256 yield_    = dep.earnedYield;
-        uint256 total     = principal + yield_;
-        address token     = dep.token;
+        uint256 manualYield = dep.earnedYield;
+        uint256 autoYield   = pendingYield(msg.sender, depositIndex);
+        uint256 totalYield  = manualYield + autoYield;
+        uint256 total       = principal + totalYield;
+        address token       = dep.token;
 
         // Rate limiting check (automatic security)
         _checkAndUpdateRateLimits(msg.sender, total);
@@ -245,13 +279,39 @@ contract DepositRegistry {
         dep.active      = false;
         dep.amount      = 0;
         dep.earnedYield = 0;
+        lastClaimedAt[msg.sender][depositIndex] = block.timestamp;
         totalDepositedByToken[token]   -= principal;
         userTotalDeposited[msg.sender] -= principal;
 
-        emit Withdrawn(msg.sender, depositIndex, principal, yield_);
+        emit Withdrawn(msg.sender, depositIndex, principal, totalYield);
 
         // INTERACTION last
         require(IERC20(token).transfer(msg.sender, total), "transfer failed");
+    }
+
+    // ── User: Claim Yield Only (keeps principal) ────────────────────────────────
+
+    function claimYield(uint256 depositIndex) external notPaused nonReentrant {
+        Deposit storage dep = userDeposits[msg.sender][depositIndex];
+
+        require(dep.active, "deposit not active");
+
+        // Total claimable = auto-calculated yield + admin-credited bonus yield
+        uint256 autoYield   = pendingYield(msg.sender, depositIndex);
+        uint256 manualYield = dep.earnedYield;
+        uint256 totalYield  = autoYield + manualYield;
+        require(totalYield > 0, "no yield to claim yet");
+
+        address token = dep.token;
+
+        // EFFECTS — reset counters before transfer
+        dep.earnedYield = 0;
+        lastClaimedAt[msg.sender][depositIndex] = block.timestamp;
+
+        emit YieldClaimed(msg.sender, depositIndex, totalYield);
+
+        // INTERACTION last
+        require(IERC20(token).transfer(msg.sender, totalYield), "yield transfer failed");
     }
 
     // ── User: Partial Withdraw ─────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { http, createConfig } from 'wagmi';
+import { http, fallback, createConfig } from 'wagmi';
 import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors';
 
 // â”€â”€â”€ Tempo Networks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -44,7 +44,11 @@ export const wagmiConfig = createConfig({
     }),
   ],
   transports: {
-    [TEMPO_TESTNET.id]: http('https://rpc.moderato.tempo.xyz', { timeout: 15000, retryCount: 2 }),
+    [TEMPO_TESTNET.id]: fallback([
+      http('https://rpc.moderato.tempo.xyz', { timeout: 8000, retryCount: 3, retryDelay: 500 }),
+      http('https://rpc.testnet.tempo.xyz',  { timeout: 8000, retryCount: 3, retryDelay: 500 }),
+      http('https://rpc.tempo.xyz',           { timeout: 10000, retryCount: 2 }),
+    ]),
   },
 });
 
