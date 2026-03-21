@@ -148,7 +148,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     writeApprove({
       address: tokenIn.address, abi: ERC20_ABI, chainId: currentNetworkId,
       functionName: 'approve',
-      args: [DEX_ADDRESS, 115792089237316195423570985008687907853269984665640564039457584007913129639935n], // max uint256
+      args: [DEX_ADDRESS, 115792089237316195423570985008687907853269984665640564039457584007913129639935n],
     });
   };
 
@@ -160,9 +160,29 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     chainId: currentNetworkId,
   });
 
+  // Read pair's best ticks for correct market order placement
+  const baseToken_ = tokenIn?.isQuoteToken ? tokenOut : tokenIn; // base = non-pUSD token
+  const { data: pairKeyData } = useReadContract({
+    address: DEX_ADDRESS, abi: DEX_ABI,
+    functionName: 'pairKey',
+    args: baseToken_ ? [tokenIn.address, tokenOut.address] : undefined,
+    query: { enabled: !!tokenIn && !!tokenOut },
+    chainId: currentNetworkId,
+  });
+  const { data: booksData } = useReadContract({
+    address: DEX_ADDRESS, abi: DEX_ABI,
+    functionName: 'books',
+    args: pairKeyData ? [pairKeyData] : undefined,
+    query: { enabled: !!pairKeyData },
+    chainId: currentNetworkId,
+  });
+  const bestBidTick = booksData ? Number(booksData.bestBidTick) : 0;
+  const bestAskTick = booksData ? Number(booksData.bestAskTick) : 0;
+  const pairHasOrders = bestBidTick !== 0 || bestAskTick !== 0;
+
   // Smart Swap: use direct swap if liquidity exists, otherwise auto-place market order
   const hasLiquidity = !quoteError && quotedOut != null && quotedOut > 0n;
-  const swapMode = hasLiquidity ? 'direct' : 'market-order';
+  const swapMode = hasLiquidity ? 'direct' : pairHasOrders ? 'market-order' : 'no-liquidity';
 
   const lastSwapRef = useRef(null);
 
@@ -200,25 +220,25 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
         functionName: 'swapExactAmountIn',
         args: [tokenIn.address, tokenOut.address, parsedAmountIn, minOut],
       });
-    } else {
-      // ─── Auto Market Order fallback (no liquidity) ────────────────────────
-      // Determine base token and direction
+    } else if (swapMode === 'market-order') {
+      // ─── Market Order fallback (no direct liquidity) ──────────────────────
       const baseToken = tokenIn.isQuoteToken ? tokenOut : tokenIn;
-      const isBid = tokenIn.isQuoteToken; // buying base with pUSD = bid; selling base for pUSD = ask
-
+      const isBid = tokenIn.isQuoteToken;
+      const rawTick = isBid
+        ? (bestAskTick !== 0 ? bestAskTick : bestBidTick)
+        : (bestBidTick !== 0 ? bestBidTick : bestAskTick);
+      const marketTick = (Number.isFinite(rawTick) && Number.isInteger(rawTick)) ? rawTick : 0;
       let orderAmount = parsedAmountIn;
-      if (isBid) {
-        // pUSD → base: amount of base at tick=0 (1:1 ratio)
-        // price at tick=0 = 1.0, so base amount = pUSD amount
-        orderAmount = parsedAmountIn;
-      }
+      if (!orderAmount || orderAmount <= 0n) return;
       if (orderAmount > MAX_UINT128) orderAmount = MAX_UINT128;
-
       writeContract({
         address: DEX_ADDRESS, abi: DEX_ABI, chainId: currentNetworkId,
         functionName: 'place',
-        args: [baseToken.address, orderAmount, isBid, 0], // tick = 0 = market price
+        args: [baseToken.address, orderAmount, isBid, marketTick],
       });
+    } else {
+      setTxError('⚠️ No liquidity available for this pair right now.');
+      setTimeout(() => setTxError(''), 6000);
     }
 
     lastSwapRef.current = {
@@ -387,12 +407,12 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               {!isConnected
                 ? 'Connect Wallet'
                 : isPending
-                ? (swapMode === 'market-order' ? 'Placing Market Order...' : 'Swapping...')
+                ? (swapMode === 'market-order' ? 'Placing Order...' : 'Swapping...')
                 : !amountIn
                 ? 'Enter an amount'
                 : swapMode === 'market-order'
                 ? `⚡ Smart Swap: Place Market Order`
-                : `Swap ${tokenIn.symbol} → ${tokenOut.symbol}`
+                : `Swap ${tokenIn?.symbol} → ${tokenOut?.symbol}`
               }
             </button>
           )}

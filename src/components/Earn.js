@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useAccount, useConnect, useWriteContract, useReadContract, useBalance } from 'wagmi';
+import { useState, useEffect, useRef } from 'react';
+import { useAccount, useConnect, useWriteContract, useReadContract, useReadContracts, useBalance } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 import {
   TOKENS, ADMIN_WALLET, ERC20_ABI, REGISTRY_ADDRESS, REGISTRY_ABI,
@@ -94,15 +94,46 @@ function Countdown({ unlockTime }) {
 }
 
 // ─── Position Card ────────────────────────────────────────────────────────────
-function PositionCard({ dep, index, address, currentNetworkId, onWithdraw }) {
+function PositionCard({ dep, index, address, currentNetworkId, onWithdraw, onClaimYield }) {
   const tier = LOCK_TIERS[dep.lockPeriod] || LOCK_TIERS[0];
   const token = Object.values(TOKENS).find(t => t.address.toLowerCase() === dep.token.toLowerCase());
   const now = Math.floor(Date.now() / 1000);
   const unlocked = dep.lockPeriod === LOCK_PERIOD.FLEXIBLE || Number(dep.unlockTime) <= now;
   const principalFloat = parseFloat(formatUnits(dep.amount, token?.decimals || 6));
-  const yield_ = formatUnits(dep.earnedYield, token?.decimals || 6);
+  const decimals = token?.decimals || 6;
+
+  // Read live auto-yield from contract (updates on each block)
+  const registryAddr = REGISTRY_ADDRESS[currentNetworkId];
+  const { data: liveAutoYield, refetch: refetchAutoYield } = useReadContract({
+    address: registryAddr,
+    abi: REGISTRY_ABI,
+    functionName: 'pendingYield',
+    args: [address, BigInt(index)],
+    chainId: currentNetworkId,
+    watch: true,
+  });
+
+  // Total claimable = auto-yield (live from contract) + admin-credited earnedYield
+  const autoYieldFloat  = liveAutoYield ? parseFloat(formatUnits(liveAutoYield, decimals)) : 0;
+  const earnedYieldFloat = parseFloat(formatUnits(dep.earnedYield, decimals));
+
   const [withdrawAmt, setWithdrawAmt] = useState('');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [justClaimed, setJustClaimed] = useState(false);
+  const claimRef = useRef(false); // tracks if we actually submitted a claim tx
+
+  // Reset justClaimed once liveAutoYield returns 0 from contract (pendingYield resets after claimYield)
+  useEffect(() => {
+    if (justClaimed && claimRef.current && liveAutoYield === 0n) {
+      setJustClaimed(false);
+      claimRef.current = false;
+    }
+  }, [justClaimed, liveAutoYield]);
+
+  // After claim: show 0 immediately (optimistic) while blockchain state catches up
+  const totalYieldFloat  = justClaimed ? 0 : (autoYieldFloat + earnedYieldFloat);
+  const hasYield = !justClaimed && totalYieldFloat > 0.000001;
 
   const handlePct = (pct) => {
     const val = principalFloat * pct / 100;
@@ -113,8 +144,31 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw }) {
     const amt = parseFloat(withdrawAmt);
     if (!amt || amt <= 0) return;
     setIsWithdrawing(true);
-    onWithdraw(index, withdrawAmt, token?.decimals || 6, amt >= principalFloat)
+    onWithdraw(index, withdrawAmt, decimals, amt >= principalFloat)
       .finally(() => setIsWithdrawing(false));
+  };
+
+  const handleClaim = () => {
+    if (!hasYield || isClaiming || justClaimed) return;
+    setIsClaiming(true);
+    setJustClaimed(true);      // show 0 immediately
+    claimRef.current = true;   // guard: a real claim was submitted
+    onClaimYield(index)
+      .then(() => {
+        // Force refetch live yield — contract should return 0 now
+        refetchAutoYield();
+        setTimeout(() => refetchAutoYield(), 2000);
+        setTimeout(() => refetchAutoYield(), 5000);
+      })
+      .catch(() => {
+        // Claim failed — revert justClaimed so yield shows again
+        setJustClaimed(false);
+      })
+      .finally(() => {
+        setIsClaiming(false);
+        // Safety fallback: clear justClaimed after 60s even if contract never updates
+        setTimeout(() => setJustClaimed(false), 60000);
+      });
   };
 
   return (
@@ -144,8 +198,13 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw }) {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
         <div style={{ background: 'var(--bg-panel)', borderRadius: '10px', padding: '10px 12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '3px' }}>Earned Yield</div>
-          <div style={{ fontWeight: 700, color: '#34d399', fontSize: '14px' }}>+{parseFloat(yield_).toFixed(4)} {token?.symbol}</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '3px' }}>Earned Yield 🔄</div>
+          <div style={{ fontWeight: 700, color: '#34d399', fontSize: '14px' }}>
+            +{totalYieldFloat.toFixed(6)} {token?.symbol}
+          </div>
+          <div style={{ fontSize: '10px', color: 'var(--text-dim)', marginTop: '2px' }}>
+            Auto-accruing · {(tier.apy / 365).toFixed(4)}%/day
+          </div>
         </div>
         <div style={{ background: 'var(--bg-panel)', borderRadius: '10px', padding: '10px 12px' }}>
           <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '3px' }}>
@@ -156,6 +215,32 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw }) {
           </div>
         </div>
       </div>
+
+      {/* Claim Yield button — always visible when yield > 0 (even when locked!) */}
+      {(hasYield || justClaimed) && (
+        <button
+          onClick={handleClaim}
+          disabled={isClaiming || justClaimed}
+          style={{
+            width: '100%', padding: '11px', borderRadius: '10px', border: 'none',
+            background: (isClaiming || justClaimed)
+              ? 'linear-gradient(135deg, #6366f1, #4f46e5)'
+              : 'linear-gradient(135deg, #f59e0b, #d97706)',
+            color: '#fff', fontWeight: 700, fontSize: '13px',
+            cursor: (isClaiming || justClaimed) ? 'not-allowed' : 'pointer',
+            marginBottom: '8px',
+            boxShadow: '0 4px 15px rgba(245,158,11,0.3)',
+            transition: 'all 0.2s',
+            opacity: justClaimed && !isClaiming ? 0.7 : 1,
+          }}
+        >
+          {isClaiming
+            ? '⏳ Claiming — Confirm in MetaMask...'
+            : justClaimed
+            ? '✅ Yield Claimed!'
+            : `🌾 Claim Yield: +${totalYieldFloat.toFixed(6)} ${token?.symbol}`}
+        </button>
+      )}
 
       {/* Withdraw section — only when unlocked */}
       {unlocked && (
@@ -360,11 +445,13 @@ export default function Earn({ currentNetworkId, onConnect }) {
           functionName: 'approve',
           args: [registryAddr, MAX_UINT256],
           chainId: currentNetworkId,
+          gas: 2_000_000n,
         });
+        // No need to wait for approve mining — deposit uses explicit gas (no estimation needed)
         setStatusMsg('✅ Approved! Now registering deposit...');
       }
 
-      // Step 2: Register deposit on-chain
+      // Step 2: Register deposit on-chain (with explicit gas to avoid estimation issues)
       setStep('registering');
       setStatusMsg('⏳ Registering deposit — confirm in MetaMask...');
       await writeContractAsync({
@@ -373,6 +460,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
         functionName: 'registerDeposit',
         args: [selectedToken.address, parsedAmt, selectedTier],
         chainId: currentNetworkId,
+        gas: 4_000_000n, // v8 auto-yield needs ~3.1M gas for first deposit (new storage slots)
       });
 
       // Done!
@@ -394,7 +482,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
 
   const handleWithdraw = async (index, amountStr, decimals, isFull) => {
     const dep = deposits[index];
-    if (!dep) return;
+    if (!dep) return Promise.resolve(); // Always return a Promise!
     setWithdrawMsg('');
     try {
       if (isFull) {
@@ -405,38 +493,90 @@ export default function Earn({ currentNetworkId, onConnect }) {
           functionName: 'withdraw',
           args: [BigInt(index)],
           chainId: currentNetworkId,
+          gas: 4_000_000n,
         });
         setWithdrawMsg('✅ Withdrawn! Principal + yield sent to your wallet.');
       } else {
         // Partial withdraw — returns specified amount only
         const { parseUnits } = await import('viem');
-        const amountBig = parseUnits(String(parseFloat(amountStr).toFixed(decimals)), decimals);
+        const safeStr = parseFloat(amountStr).toFixed(decimals);
+        const amountBig = parseUnits(safeStr, decimals);
         await writeContractAsync({
           address: registryAddr,
           abi: REGISTRY_ABI,
           functionName: 'withdrawPartial',
           args: [BigInt(index), amountBig],
           chainId: currentNetworkId,
+          gas: 4_000_000n,
         });
         setWithdrawMsg(`✅ Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
       }
       setTimeout(() => { refetchDeposits(); setWithdrawMsg(''); }, 6000);
     } catch (err) {
-      setWithdrawMsg(`❌ ${err.shortMessage || err.message || 'Withdrawal failed. Try again.'}`);
-      setTimeout(() => setWithdrawMsg(''), 5000);
+      const msg = err.shortMessage || err.message || '';
+      // Show friendly messages for known errors
+      const friendly = msg.includes('wait 1 hour') ? '⏳ Please wait 1 hour between withdrawals (rate limit).'
+        : msg.includes('daily') ? '⏳ Daily withdrawal limit reached. Try again tomorrow.'
+        : msg.includes('paused') ? '🔴 Contract is paused. Contact admin.'
+        : `❌ ${msg || 'Withdrawal failed. Try again.'}`;
+      setWithdrawMsg(friendly);
+      setTimeout(() => setWithdrawMsg(''), 6000);
       throw err; // Re-throw so PositionCard .finally() still fires
     }
   };
 
+  const handleClaimYield = async (index) => {
+    const dep = deposits[index];
+    if (!dep) return Promise.resolve();
+    setWithdrawMsg('');
+    try {
+      await writeContractAsync({
+        address: registryAddr,
+        abi: REGISTRY_ABI,
+        functionName: 'claimYield',
+        args: [BigInt(index)],
+        chainId: currentNetworkId,
+        gas: 4_000_000n,
+      });
+      setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+      // Refetch IMMEDIATELY so yield resets to 0 — prevents double-claim
+      refetchDeposits();
+      // Also refetch after slight delay to catch any RPC lag
+      setTimeout(() => { refetchDeposits(); setWithdrawMsg(''); }, 3000);
+    } catch (err) {
+      const msg = err.shortMessage || err.message || '';
+      setWithdrawMsg(msg.includes('no yield') ? '⚠️ No yield to claim yet.' : `❌ ${msg || 'Claim failed. Try again.'}`);
+      setTimeout(() => setWithdrawMsg(''), 5000);
+      throw err;
+    }
+  };
 
   const activeDeposits = Array.isArray(deposits) ? deposits.filter(d => d.active) : [];
   const totalDeposited = activeDeposits.reduce((sum, d) => {
     const tok = Object.values(TOKENS).find(t => t.address.toLowerCase() === d.token.toLowerCase());
     return sum + parseFloat(formatUnits(d.amount, tok?.decimals || 6));
   }, 0);
-  const totalYield = activeDeposits.reduce((sum, d) => {
+
+  // Batch-read pendingYield for ALL active deposits to show correct total in header
+  const { data: allPendingYields } = useReadContracts({
+    contracts: activeDeposits.map((_, i) => ({
+      address: registryAddr,
+      abi: REGISTRY_ABI,
+      functionName: 'pendingYield',
+      args: [address, BigInt(i)],
+      chainId: currentNetworkId,
+    })),
+    query: { enabled: !!address && activeDeposits.length > 0, refetchInterval: 5000 },
+  });
+
+  const totalYield = activeDeposits.reduce((sum, d, i) => {
     const tok = Object.values(TOKENS).find(t => t.address.toLowerCase() === d.token.toLowerCase());
-    return sum + parseFloat(formatUnits(d.earnedYield, tok?.decimals || 6));
+    const decimals = tok?.decimals || 6;
+    const earned = parseFloat(formatUnits(d.earnedYield, decimals));
+    const pending = allPendingYields?.[i]?.result
+      ? parseFloat(formatUnits(allPendingYields[i].result, decimals))
+      : 0;
+    return sum + earned + pending;
   }, 0);
 
   if (!isConnected) {
@@ -667,6 +807,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
                 address={address}
                 currentNetworkId={currentNetworkId}
                 onWithdraw={handleWithdraw}
+                onClaimYield={handleClaimYield}
               />
             ))}
           </div>

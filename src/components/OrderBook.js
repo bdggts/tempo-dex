@@ -11,7 +11,8 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
   const { connectors, connect } = useConnect();
   const { switchChain } = useSwitchChain();
 
-  const networkTokens = getTokensForChain(currentNetworkId);
+  // Only non-quote tokens can be BASE tokens in place() — filter out pUSD/quote
+  const networkTokens = getTokensForChain(currentNetworkId).filter(t => !t.isQuoteToken);
   const [selectedToken, setSelectedToken] = useState(networkTokens[0] || null);
   const [amount, setAmount] = useState('');
   const [isBid, setIsBid] = useState(true); // true = buy, false = sell
@@ -23,7 +24,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
 
   // Reset token when network changes
   useEffect(() => {
-    const tokens = getTokensForChain(currentNetworkId);
+    const tokens = getTokensForChain(currentNetworkId).filter(t => !t.isQuoteToken);
     setSelectedToken(tokens[0] || null);
     setAmount('');
   }, [currentNetworkId]);
@@ -95,12 +96,9 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
 
   const spendToken = isBid ? TOKENS.PATH_USD : selectedToken;
   
-  // Use BigInt math to avoid scientific notation errors with large balances
   let parsedSpendAmount = 0n;
   if (parsedAmount > 0n) {
     if (isBid) {
-      // pUSD needed = amount * (100000 + tick) / 100000
-      // Adjust for decimal differences if necessary (here both usually 6)
       const priceNumerator = BigInt(PRICE_SCALE + tick);
       const priceDenominator = BigInt(PRICE_SCALE);
       parsedSpendAmount = (parsedAmount * priceNumerator) / priceDenominator;
@@ -109,7 +107,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
     }
   }
 
-  // Read Allowance
+  // Read Allowance — place() does transferFrom internally, so DEX needs allowance
   const { data: allowance } = useReadContract({
     address: spendToken.address, abi: ERC20_ABI,
     functionName: 'allowance',
@@ -118,7 +116,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
     chainId: currentNetworkId,
   });
 
-  const needsApproval = allowance !== undefined && allowance < parsedSpendAmount;
+  const needsApproval = allowance !== undefined && parsedSpendAmount > 0n && allowance < parsedSpendAmount;
 
   const { writeContract: writeApprove, data: approveTxHash, isPending: isApproveSigning } = useWriteContract();
   const { isLoading: isApproveConfirming } = useWaitForTransactionReceipt({ hash: approveTxHash });
@@ -129,15 +127,23 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
     writeApprove({
       address: spendToken.address, abi: ERC20_ABI, chainId: currentNetworkId,
       functionName: 'approve',
-      args: [DEX_ADDRESS, 115792089237316195423570985008687907853269984665640564039457584007913129639935n], // max uint256
+      args: [DEX_ADDRESS, 115792089237316195423570985008687907853269984665640564039457584007913129639935n],
     });
   };
 
   /* ─── Place Order ──────────────────────────────────────────────────────── */
+  const MIN_ORDER_AMOUNT = 100_000n; // 0.1 tokens (6 decimals) — Tempo DEX minimum
+
   const handlePlaceOrder = () => {
     if (!isConnected) { onConnect(); return; }
     if (!amount || parsedAmount === 0n) return;
     setTxError('');
+
+    if (parsedAmount < MIN_ORDER_AMOUNT) {
+      setTxError('⚠️ Minimum order size is 0.1 tokens. Please enter a larger amount.');
+      setTimeout(() => setTxError(''), 6000);
+      return;
+    }
 
     if (isFlip) {
       writeContract({
@@ -292,14 +298,14 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
           )}
         </div>
 
-        {/* Place Order Button */}
+        {/* Action Buttons: Approve → Place Order */}
         {isConnected && chainId !== currentNetworkId ? (
           <button className="btn-primary" onClick={() => onSwitch ? onSwitch(currentNetworkId) : handlePlaceOrder()} style={{ background: 'var(--brand-secondary)', borderColor: 'var(--brand-secondary)' }}>
             Switch to {currentNetworkId === 4217 ? 'Tempo Mainnet' : 'Tempo Testnet'}
           </button>
         ) : needsApproval ? (
           <button className="btn-primary" onClick={handleApprove} disabled={isApprovePending || (isConnected && !amount)} style={{ background: 'var(--brand-primary)', opacity: (!amount || isApprovePending) ? 0.6 : 1 }}>
-            {isApprovePending ? 'Approving...' : `Approve ${spendToken.symbol}`}
+            {isApprovePending ? '⏳ Approving...' : `Approve ${spendToken.symbol}`}
           </button>
         ) : (
           <button className="btn-primary" onClick={handlePlaceOrder}
@@ -319,7 +325,14 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
             {!isSuccess && (
               <div>
                 <div style={{ marginBottom: '4px' }}>📡 Transaction Sent!</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>⏳ Submitting to Tempo orderbook...</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '6px' }}>⏳ Submitting to Tempo orderbook...</div>
+                <a
+                  href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`}
+                  target="_blank" rel="noreferrer"
+                  style={{ fontSize: '12px', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 600 }}
+                >
+                  🔍 View on Explorer ↗
+                </a>
               </div>
             )}
             {isSuccess && (

@@ -10,20 +10,63 @@ import * as XLSX from 'xlsx';
 const TOKEN_LIST = Object.values(TOKENS);
 
 function OrderRow({ order, currentNetworkId }) {
-  const { data: cancelHash, isPending: isCancelSigning, writeContract } = useWriteContract();
-  const { isLoading: isCancelConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: cancelHash });
+  const { address } = useAccount();
+  const publicClient = usePublicClient({ chainId: currentNetworkId });
+  const { writeContractAsync } = useWriteContract();
 
-  const isCancelling = isCancelSigning || isCancelConfirming;
-  const isCancelled = isSuccess || order.status === 'Cancelled';
+  const [cancelStep, setCancelStep] = useState('idle'); // idle|cancelling|withdrawing|done|error
+  const [cancelMsg, setCancelMsg] = useState('');
 
-  const handleCancel = () => {
-    writeContract({
-      address: DEX_ADDRESS,
-      abi: DEX_ABI,
-      chainId: currentNetworkId,
-      functionName: 'cancel',
-      args: [order.id]
-    });
+  const isBusy = cancelStep === 'cancelling' || cancelStep === 'withdrawing';
+  const isDone = cancelStep === 'done' || order.status === 'Cancelled';
+
+  const handleCancel = async () => {
+    if (isBusy || isDone) return;
+    setCancelStep('cancelling');
+    setCancelMsg('');
+    try {
+      // Step 1: Cancel order on DEX
+      const cancelHash = await writeContractAsync({
+        address: DEX_ADDRESS, abi: DEX_ABI, chainId: currentNetworkId,
+        functionName: 'cancel', args: [order.id],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: cancelHash });
+
+      // Step 2: Determine which token was escrowed
+      // BID (buy): escrows pUSD; ASK (sell): escrows base token
+      const pUSD = TOKEN_LIST.find(t => t.isQuoteToken);
+      const baseToken = TOKEN_LIST.find(t => t.address.toLowerCase() === order.token.toLowerCase());
+      const escrowToken = order.isBid ? pUSD : baseToken;
+
+      if (!escrowToken || !address) { setCancelStep('done'); return; }
+
+      // Step 3: Read DEX internal balance (refunded amount)
+      const dexBalance = await publicClient.readContract({
+        address: DEX_ADDRESS, abi: DEX_ABI,
+        functionName: 'balanceOf',
+        args: [address, escrowToken.address],
+      });
+
+      // Step 4: Withdraw to wallet
+      if (dexBalance > 0n) {
+        setCancelStep('withdrawing');
+        const withdrawHash = await writeContractAsync({
+          address: DEX_ADDRESS, abi: DEX_ABI, chainId: currentNetworkId,
+          functionName: 'withdraw',
+          args: [escrowToken.address, dexBalance],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: withdrawHash });
+      }
+
+      setCancelStep('done');
+      setCancelMsg(`✅ Cancelled! ${escrowToken.symbol} returned to your wallet.`);
+      setTimeout(() => setCancelMsg(''), 8000);
+    } catch (err) {
+      setCancelStep('error');
+      const msg = err.shortMessage || err.message || 'Cancel failed';
+      setCancelMsg(`❌ ${msg.slice(0, 80)}`);
+      setTimeout(() => { setCancelStep('idle'); setCancelMsg(''); }, 6000);
+    }
   };
 
   const token = TOKEN_LIST.find(t => t.address.toLowerCase() === order.token.toLowerCase()) || { symbol: '???', decimals: 6 };
@@ -44,7 +87,7 @@ function OrderRow({ order, currentNetworkId }) {
     statusColor = 'var(--warning)';
   }
 
-  if (isCancelled) {
+  if (isDone) {
     statusColor = 'var(--danger)';
     statusText = 'Cancelled';
   }
@@ -78,14 +121,25 @@ function OrderRow({ order, currentNetworkId }) {
         {order.status !== 'Cancelled' && filledPct > 0 && <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>{filledPct}% Filled</div>}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: '80px' }}>
-        {(order.status === 'Active' || order.status === 'Partially Filled') && !isCancelled && (
-          <button 
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px', gap: '4px' }}>
+        {(order.status === 'Active' || order.status === 'Partially Filled') && !isDone && (
+          <button
             onClick={handleCancel}
-            disabled={isCancelling}
-            style={{ padding: '6px 12px', fontSize: '12px', fontWeight: 600, background: 'rgba(255, 71, 87, 0.1)', color: 'var(--danger)', border: '1px solid rgba(255, 71, 87, 0.2)', borderRadius: '6px', cursor: isCancelling ? 'not-allowed' : 'pointer', transition: '0.2s' }}>
-            {isCancelling ? '...' : 'Cancel'}
+            disabled={isBusy}
+            style={{
+              padding: '6px 12px', fontSize: '12px', fontWeight: 600,
+              background: cancelStep === 'withdrawing' ? 'rgba(52,211,153,0.1)' : 'rgba(255, 71, 87, 0.1)',
+              color: cancelStep === 'withdrawing' ? 'var(--success)' : 'var(--danger)',
+              border: `1px solid ${cancelStep === 'withdrawing' ? 'rgba(52,211,153,0.3)' : 'rgba(255, 71, 87, 0.2)'}`,
+              borderRadius: '6px', cursor: isBusy ? 'not-allowed' : 'pointer', transition: '0.2s', whiteSpace: 'nowrap',
+            }}>
+            {cancelStep === 'cancelling' ? '⏳ Cancelling...' : cancelStep === 'withdrawing' ? '⏳ Withdrawing...' : '✕ Cancel'}
           </button>
+        )}
+        {cancelMsg && (
+          <div style={{ fontSize: '11px', color: cancelMsg.startsWith('✅') ? 'var(--success)' : 'var(--danger)', textAlign: 'right', maxWidth: '140px', lineHeight: 1.3 }}>
+            {cancelMsg}
+          </div>
         )}
       </div>
     </div>
@@ -153,45 +207,48 @@ export default function History({ currentNetworkId, onConnect }) {
         const fillAbi = DEX_ABI.find(a => a.name === 'OrderFilled' && a.type === 'event');
         const cancelAbi = DEX_ABI.find(a => a.name === 'OrderCancelled' && a.type === 'event');
 
-        // Fetch logs
-        // Tempo Testnet RPC limits getLogs to 100,000 blocks at a time.
-        // We will fetch the last 300,000 blocks (approx 3.5 days of history).
+        // Fetch logs — only last 100k blocks to avoid RPC timeout
+        // Tempo testnet has 12M+ orders; fetching all without filter times out
         const currentBlock = await publicClient.getBlockNumber();
         const CHUNK_SIZE = 99999n;
-        const NUM_CHUNKS = 3n;
-        const targetStart = currentBlock > (CHUNK_SIZE * NUM_CHUNKS) ? currentBlock - (CHUNK_SIZE * NUM_CHUNKS) : 0n;
+        const fromBlock = currentBlock > CHUNK_SIZE ? currentBlock - CHUNK_SIZE : 0n;
 
         let allPlaced = [];
         let allFilled = [];
         let allCancelled = [];
 
-        for (let start = targetStart; start <= currentBlock; start += CHUNK_SIZE + 1n) {
-          const end = (start + CHUNK_SIZE > currentBlock) ? currentBlock : start + CHUNK_SIZE;
+        try {
+          // Try with indexed maker filter first (fast — only user's events)
           const [placedLogs, filledLogs, cancelLogs] = await Promise.all([
             publicClient.getLogs({
-              address: DEX_ADDRESS,
-              event: placeAbi,
+              address: DEX_ADDRESS, event: placeAbi,
               args: { maker: address },
-              fromBlock: start,
-              toBlock: end
+              fromBlock, toBlock: currentBlock
             }),
             publicClient.getLogs({
-              address: DEX_ADDRESS,
-              event: fillAbi,
+              address: DEX_ADDRESS, event: fillAbi,
               args: { maker: address },
-              fromBlock: start,
-              toBlock: end
+              fromBlock, toBlock: currentBlock
             }),
             publicClient.getLogs({
-              address: DEX_ADDRESS,
-              event: cancelAbi,
-              fromBlock: start,
-              toBlock: end
+              address: DEX_ADDRESS, event: cancelAbi,
+              fromBlock, toBlock: currentBlock
             })
           ]);
-          allPlaced = allPlaced.concat(placedLogs);
-          allFilled = allFilled.concat(filledLogs);
-          allCancelled = allCancelled.concat(cancelLogs);
+          allPlaced = placedLogs;
+          allFilled = filledLogs;
+          allCancelled = cancelLogs;
+        } catch {
+          // Fallback: fetch all events and filter client-side
+          const userAddr = address.toLowerCase();
+          const [placedLogs, filledLogs, cancelLogs] = await Promise.all([
+            publicClient.getLogs({ address: DEX_ADDRESS, event: placeAbi, fromBlock, toBlock: currentBlock }),
+            publicClient.getLogs({ address: DEX_ADDRESS, event: fillAbi, fromBlock, toBlock: currentBlock }),
+            publicClient.getLogs({ address: DEX_ADDRESS, event: cancelAbi, fromBlock, toBlock: currentBlock })
+          ]);
+          allPlaced = placedLogs.filter(l => l.args?.maker?.toLowerCase() === userAddr);
+          allFilled = filledLogs.filter(l => l.args?.maker?.toLowerCase() === userAddr);
+          allCancelled = cancelLogs;
         }
 
         if (!isMounted) return;

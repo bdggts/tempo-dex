@@ -8,17 +8,10 @@ import Earn from '@/components/Earn';
 import History from '@/components/History';
 import Guide from '@/components/Guide';
 import About from '@/components/About';
-import { TEMPO_MAINNET, TEMPO_TESTNET } from '@/config/web3';
+import { TEMPO_TESTNET } from '@/config/web3';
 
 // Format networks for MetaMask
 const NETWORKS = {
-  [TEMPO_MAINNET.id]: {
-    chainId: `0x${TEMPO_MAINNET.id.toString(16)}`,
-    chainName: TEMPO_MAINNET.name,
-    nativeCurrency: TEMPO_MAINNET.nativeCurrency,
-    rpcUrls: TEMPO_MAINNET.rpcUrls.default.http,
-    blockExplorerUrls: [TEMPO_MAINNET.blockExplorers.default.url],
-  },
   [TEMPO_TESTNET.id]: {
     chainId: `0x${TEMPO_TESTNET.id.toString(16)}`,
     chainName: TEMPO_TESTNET.name,
@@ -131,6 +124,7 @@ export default function Home() {
 
   // The network we WANT the app to show and trade on
   const activeChainId = targetChainId;
+  const isTestnet = activeChainId === TEMPO_TESTNET.id;
   const isCorrectNetwork = isConnected ? (chainId === activeChainId) : true;
 
   // Don't render wallet-dependent UI until client is ready (prevents hydration error)
@@ -152,8 +146,7 @@ export default function Home() {
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <div style={{ background: 'var(--bg-panel)', padding: '0px 10px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 6px var(--success)' }} />
-              <select value={activeChainId} onChange={handleNetworkChange} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontWeight: 600, outline: 'none', padding: '7px 0', cursor: 'pointer' }}>
-                <option value={TEMPO_MAINNET.id} style={{ background: 'var(--bg-card)', color: 'white' }}>Tempo Mainnet</option>
+              <select defaultValue={TEMPO_TESTNET.id} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontWeight: 600, outline: 'none', padding: '7px 0', cursor: 'pointer' }}>
                 <option value={TEMPO_TESTNET.id} style={{ background: 'var(--bg-card)', color: 'white' }}>Tempo Testnet</option>
               </select>
             </div>
@@ -201,10 +194,25 @@ export default function Home() {
           <div style={{ background: 'var(--bg-panel)', padding: '0px 10px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: isCorrectNetwork ? 'var(--success)' : 'var(--danger)', boxShadow: `0 0 6px ${isCorrectNetwork ? 'var(--success)' : 'var(--danger)'}` }} />
             <select value={activeChainId} onChange={handleNetworkChange} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontWeight: 600, outline: 'none', padding: '7px 0', cursor: 'pointer' }}>
-              <option value={TEMPO_MAINNET.id} style={{ background: 'var(--bg-card)', color: 'white' }}>Tempo Mainnet</option>
               <option value={TEMPO_TESTNET.id} style={{ background: 'var(--bg-card)', color: 'white' }}>Tempo Testnet</option>
             </select>
           </div>
+
+          {/* Faucet shortcut — only on testnet */}
+          {isTestnet && (
+            <button
+              onClick={() => setActiveTab('wallet')}
+              title="Get free testnet tokens"
+              style={{
+                padding: '7px 12px', borderRadius: '20px', border: '1px solid #f59e0b50',
+                background: 'rgba(245,158,11,0.1)', color: '#f59e0b',
+                fontWeight: 700, fontSize: '12px', cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              🚰 Get Tokens
+            </button>
+          )}
 
           {isConnected ? (
             <button className="btn-connect"
@@ -231,11 +239,92 @@ export default function Home() {
           {activeTab === 'guide'   && <Guide />}
           {activeTab === 'about'   && <About />}
 
-          {/* Footer */}
-          <div style={{ padding: '14px 18px', background: 'var(--bg-panel)', borderRadius: '16px', border: '1px solid var(--border-light)', fontSize: '12px', color: 'var(--text-dim)', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '20px' }}>
-            <span>📖 Price-Time Priority Orderbook</span>
-            <span>⚡ Sub-second Finality</span>
-            <span style={{ color: 'var(--success)' }}>✅ 100% Gas Sponsored</span>
+          {/* ── Professional Footer ── */}
+          <div style={{
+            background: 'var(--bg-panel)',
+            borderRadius: '20px',
+            border: '1px solid var(--border-light)',
+            overflow: 'hidden',
+            marginTop: '8px',
+          }}>
+            {/* Top section */}
+            <div style={{
+              padding: '28px 28px 20px',
+              display: 'grid',
+              gridTemplateColumns: '1.5fr 1fr 1.2fr',
+              gap: '24px',
+            }}>
+              {/* Brand */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '22px' }}>🔀</span>
+                  <span style={{ fontWeight: 800, fontSize: '16px', background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TempoSwap</span>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--text-dim)', lineHeight: 1.6, margin: 0 }}>
+                  Decentralized exchange built on Tempo Network. Trade, earn yield, and manage assets — fully on-chain.
+                </p>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+                  <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid #34d39930' }}>✅ Gas Sponsored</span>
+                  <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid #818cf830' }}>⚡ Sub-second</span>
+                  <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid #f59e0b30' }}>🔒 Secured</span>
+                </div>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Quick Links</div>
+                {[
+                  { label: '⇄ Swap Tokens', tab: 'swap' },
+                  { label: '📋 Order Book', tab: 'orders' },
+                  { label: '💰 Earn Yield', tab: 'earn' },
+                  { label: '🏦 My Balances', tab: 'wallet' },
+                  { label: '📜 History', tab: 'history' },
+                  { label: '📚 Guide', tab: 'guide' },
+                ].map(link => (
+                  <div key={link.tab}
+                    onClick={() => setActiveTab(link.tab)}
+                    style={{ fontSize: '13px', color: 'var(--text-dim)', marginBottom: '7px', cursor: 'pointer', transition: 'color 0.15s' }}
+                    onMouseEnter={e => e.target.style.color = 'var(--text-main)'}
+                    onMouseLeave={e => e.target.style.color = 'var(--text-dim)'}
+                  >{link.label}</div>
+                ))}
+              </div>
+
+              {/* Network Info */}
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Network</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-dim)', lineHeight: 2 }}>
+                  <div style={{ color: 'var(--text-main)', fontWeight: 600 }}>🟡 Tempo Testnet</div>
+                  <div>Chain ID: <span style={{ color: 'var(--text-main)' }}>42431</span></div>
+                  <div>DEX: <span style={{ fontFamily: 'monospace', color: '#818cf8', fontSize: '11px' }}>0xdec0...0000</span></div>
+                  <div>Registry: <span style={{ fontFamily: 'monospace', color: '#818cf8', fontSize: '11px' }}>0x1256...a641</span></div>
+                  <div style={{ marginTop: '8px' }}>
+                    <span onClick={() => setActiveTab('wallet')} style={{ fontSize: '11px', fontWeight: 700, color: '#f59e0b', cursor: 'pointer', padding: '4px 10px', borderRadius: '20px', border: '1px solid #f59e0b40', background: 'rgba(245,158,11,0.08)' }}>
+                      🚰 Get Test Tokens
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom bar */}
+            <div style={{
+              padding: '14px 28px',
+              borderTop: '1px solid var(--border-light)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
+                © {new Date().getFullYear()} TempoSwap — Built on <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>Tempo Network</span>
+              </div>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>📖 Price-Time Priority Orderbook</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>🧪 Testnet — For Testing Only</span>
+              </div>
+            </div>
           </div>
         </div>
       </main>
