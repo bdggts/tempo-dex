@@ -132,18 +132,26 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [dismissedNetworkAlert, setDismissedNetworkAlert] = useState(false);
+  // Read chainId directly from window.ethereum — wagmi's useChainId can be stale
+  const [liveChainId, setLiveChainId] = useState(null);
 
   // Fix hydration mismatch — wait for client mount
   useEffect(() => { setMounted(true); }, []);
 
-  // Reload on MetaMask network change so wagmi chainId syncs correctly
-  // (MetaMask best practice — wagmi doesn't always pick up manual chain switch)
+  // Read live chainId directly from MetaMask and update on change
   useEffect(() => {
     if (typeof window === 'undefined' || !window.ethereum) return;
-    const handleChainChange = () => window.location.reload();
-    window.ethereum.on('chainChanged', handleChainChange);
-    return () => window.ethereum.removeListener('chainChanged', handleChainChange);
-  }, []);
+    const readChain = async () => {
+      try {
+        const hex = await window.ethereum.request({ method: 'eth_chainId' });
+        setLiveChainId(parseInt(hex, 16));
+      } catch {}
+    };
+    readChain();
+    const onChainChange = (hex) => setLiveChainId(parseInt(hex, 16));
+    window.ethereum.on('chainChanged', onChainChange);
+    return () => window.ethereum.removeListener('chainChanged', onChainChange);
+  }, [mounted]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 4000); };
 
@@ -172,10 +180,11 @@ export default function Home() {
     if (isConnected) switchOrAddNetwork(newId);
   };
 
-  // The network we WANT the app to show and trade on
+  // Use live chain from window.ethereum, fallback to wagmi's chainId
+  const effectiveChainId = liveChainId || chainId;
   const activeChainId = targetChainId;
   const isTestnet = activeChainId === TEMPO_TESTNET.id;
-  const isCorrectNetwork = isConnected ? (chainId === activeChainId) : true;
+  const isCorrectNetwork = isConnected ? (effectiveChainId === activeChainId) : true;
 
   // Don't render wallet-dependent UI until client is ready (prevents hydration error)
   if (!mounted) {
