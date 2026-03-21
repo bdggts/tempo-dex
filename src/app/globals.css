@@ -428,6 +428,21 @@ main {
     width: calc(100vw - 32px) !important;
     border-radius: 20px !important;
   }
+
+  /* Hide Get Tokens button in header — clutters mobile header */
+  .mobile-hide {
+    display: none !important;
+  }
+
+  /* Hide footer on mobile — wastes space, bottom nav covers navigation */
+  .mobile-footer {
+    display: none !important;
+  }
+
+  /* Shrink network selector text on mobile to save space */
+  .network-select-text {
+    display: none;
+  }
 }
 
 /* ── Responsive: Small phones ≤ 380px ───────────────────────────────────── */

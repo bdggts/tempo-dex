@@ -212,6 +212,7 @@ export default function Home() {
             <button
               onClick={() => setActiveTab('wallet')}
               title="Get free testnet tokens"
+              className="mobile-hide"
               style={{
                 padding: '7px 12px', borderRadius: '20px', border: '1px solid #f59e0b50',
                 background: 'rgba(245,158,11,0.1)', color: '#f59e0b',
@@ -249,7 +250,7 @@ export default function Home() {
           {activeTab === 'about'   && <About />}
 
           {/* ── Professional Footer ── */}
-          <div style={{
+          <div className="mobile-footer" style={{
             background: 'var(--bg-panel)',
             borderRadius: '20px',
             border: '1px solid var(--border-light)',
