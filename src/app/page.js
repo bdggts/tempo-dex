@@ -138,27 +138,39 @@ export default function Home() {
 
   const switchOrAddNetwork = async (chainIdToConnect) => {
     const targetNetwork = NETWORKS[chainIdToConnect];
-    if (typeof window !== 'undefined' && window.ethereum) {
+    if (!targetNetwork) return;
+    const provider = typeof window !== 'undefined' && (window.ethereum || window.web3?.currentProvider);
+    if (!provider) { if (switchChain) switchChain({ chainId: chainIdToConnect }); return; }
+    try {
+      // wallet_addEthereumChain handles BOTH add AND switch in one call
+      // MetaMask: if network already added, it just switches; if new, it adds then switches
+      await provider.request({
+        method: 'wallet_addEthereumChain',
+        params: [targetNetwork],
+      });
+      showToast(`✅ Switched to ${targetNetwork.chainName}`);
+    } catch (err) {
+      // Fallback: try switch only
       try {
-        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetNetwork.chainId }] });
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: targetNetwork.chainId }],
+        });
         showToast(`✅ Switched to ${targetNetwork.chainName}`);
-      } catch (err) {
-        if (err.code === 4902 || err.code === -32603) {
-          try {
-            await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [targetNetwork] });
-            showToast(`✅ ${targetNetwork.chainName} added!`);
-          } catch {
-            showToast(`⚠️ Add ${targetNetwork.chainName} manually (Chain ID: ${chainIdToConnect})`);
-            if (switchChain) switchChain({ chainId: chainIdToConnect });
-          }
-        } else {
-            if (switchChain) switchChain({ chainId: chainIdToConnect });
-        }
+      } catch {
+        showToast(`⚠️ Please add Tempo Testnet (Chain ID: ${chainIdToConnect}) manually in MetaMask`);
       }
-    } else if (switchChain) {
-      switchChain({ chainId: chainIdToConnect });
     }
   };
+
+  // Auto-switch to Tempo Testnet as soon as wallet is connected on wrong network
+  useEffect(() => {
+    if (isConnected && chainId !== targetChainId) {
+      switchOrAddNetwork(targetChainId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
+
 
   const handleNetworkChange = (e) => {
     const newId = Number(e.target.value);
