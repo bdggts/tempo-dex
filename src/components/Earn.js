@@ -705,7 +705,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
                 <span style={{ fontWeight: 700, color: '#34d399' }}>+{estYield.toFixed(4)} {selectedToken?.symbol}</span>
               </div>
               <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px dashed var(--border-light)', paddingTop: '8px' }}>
-                💡 Bank-style FD: Jitna zyada quarter lock karoge, utna zyada annual return milega. 12-month (Q4) pe max 15%/year.
+                💡 Fixed Deposit style: Longer lock period = higher annual return. Max 15%/year on the 12-month (Q4) plan.
               </div>
             </div>
           );
