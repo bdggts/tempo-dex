@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import {
   ensureUser, getUserData, getHistory, getLeaderboard,
-  claimTwitterFollow, getReferralCount, walletToRefCode, POINT_ACTIONS
+  getReferralCount, walletToRefCode, POINT_ACTIONS
 } from '@/lib/points';
 
 const SITE_URL = 'https://tempo-dex.vercel.app';
@@ -21,7 +21,6 @@ export default function Points({ onConnect, pendingRef }) {
   const [referralCount, setReferralCount] = useState(0);
   const [loading, setLoading]         = useState(false);
   const [copied, setCopied]           = useState(false);
-  const [twitterClaiming, setTwitterClaiming] = useState(false);
   const [twitterMsg, setTwitterMsg]   = useState('');
 
   const referralLink = address
@@ -46,26 +45,39 @@ export default function Points({ onConnect, pendingRef }) {
 
   useEffect(() => { if (isConnected) load(); }, [isConnected, load]);
 
+  // Handle redirect back from Twitter OAuth
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const twitterStatus = params.get('twitter');
+    if (!twitterStatus) return;
+
+    if (twitterStatus === 'success') {
+      const username = params.get('username') || '';
+      setTwitterMsg(`✅ Twitter connected! ${username} — +30 pts earned!`);
+      load();
+    } else if (twitterStatus === 'duplicate') {
+      setTwitterMsg('❌ This Twitter account is already linked to another wallet.');
+    } else if (twitterStatus === 'error') {
+      setTwitterMsg('❌ Twitter connection failed. Try again.');
+    }
+
+    // Clean URL
+    const cleanUrl = window.location.pathname + (params.get('ref') ? `?ref=${params.get('ref')}` : '');
+    window.history.replaceState({}, '', cleanUrl);
+
+    setTimeout(() => setTwitterMsg(''), 6000);
+  }, [load]);
+
   const copyRef = () => {
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleTwitterClaim = async () => {
+  const handleTwitterConnect = () => {
     if (!address) return;
-    setTwitterClaiming(true);
-    window.open('https://x.com/bdggts', '_blank');
-    await new Promise(r => setTimeout(r, 2000));
-    const ok = await claimTwitterFollow(address);
-    if (ok) {
-      setTwitterMsg('🎉 +30 points claimed!');
-      load();
-    } else {
-      setTwitterMsg('Already claimed or error.');
-    }
-    setTwitterClaiming(false);
-    setTimeout(() => setTwitterMsg(''), 4000);
+    window.location.href = `/api/twitter/connect?wallet=${address}`;
   };
 
   const myRank = leaderboard.findIndex(u => u.wallet === address?.toLowerCase()) + 1;
@@ -154,19 +166,30 @@ export default function Points({ onConnect, pendingRef }) {
         </div>
       </div>
 
-      {/* Twitter Follow */}
-      <div className="swap-container" style={{ padding: '16px', border: userData?.twitter_followed ? '1px solid var(--success)40' : '1px solid var(--border-light)' }}>
+      {/* Twitter Connect */}
+      <div className="swap-container" style={{ padding: '16px', border: userData?.twitter_followed ? '1px solid rgba(29,161,242,0.4)' : '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>𝕏 Follow @bdggts</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Follow on X (Twitter) and earn <strong style={{ color: '#f59e0b' }}>+30 points</strong></div>
-            {twitterMsg && <div style={{ fontSize: '12px', color: 'var(--success)', marginTop: '4px' }}>{twitterMsg}</div>}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              𝕏 Connect Twitter
+              {userData?.twitter_followed && <span style={{ fontSize: '11px', background: 'rgba(29,161,242,0.15)', color: '#1da1f2', padding: '2px 8px', borderRadius: '20px', fontWeight: 600 }}>✓ Verified</span>}
+            </div>
+            {userData?.twitter_username
+              ? <div style={{ fontSize: '13px', color: '#1da1f2', fontWeight: 600 }}>@{userData.twitter_username}</div>
+              : <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Connect your Twitter/X account to earn <strong style={{ color: '#f59e0b' }}>+30 pts</strong> &amp; unlock referral rewards</div>
+            }
+            {twitterMsg && <div style={{ fontSize: '12px', marginTop: '6px', color: twitterMsg.startsWith('✅') ? 'var(--success)' : 'var(--danger)' }}>{twitterMsg}</div>}
           </div>
           {userData?.twitter_followed
-            ? <div style={{ padding: '8px 16px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', color: 'var(--success)', fontWeight: 700, fontSize: '13px', border: '1px solid var(--success)40' }}>✓ Claimed</div>
-            : <button onClick={handleTwitterClaim} disabled={twitterClaiming}
-                style={{ background: '#000', color: '#fff', border: '1px solid #333', borderRadius: '10px', padding: '10px 18px', fontWeight: 700, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', opacity: twitterClaiming ? 0.7 : 1 }}>
-                {twitterClaiming ? 'Opening...' : '𝕏 Follow & Claim 30 pts'}
+            ? <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'rgba(29,161,242,0.1)', border: '1px solid rgba(29,161,242,0.3)', color: '#1da1f2', fontWeight: 700, fontSize: '13px' }}>
+                ✓ Connected
+              </div>
+            : <button onClick={handleTwitterConnect}
+                style={{ background: '#000', color: '#fff', border: '1px solid #333', borderRadius: '10px', padding: '10px 18px', fontWeight: 700, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
+                onMouseLeave={e => e.currentTarget.style.background = '#000'}
+              >
+                𝕏 Connect Twitter
               </button>
           }
         </div>
