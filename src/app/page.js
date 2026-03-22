@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import SwapBox from '@/components/SwapBox';
 import OrderBook from '@/components/OrderBook';
@@ -8,8 +8,10 @@ import Earn from '@/components/Earn';
 import History from '@/components/History';
 import Guide from '@/components/Guide';
 import About from '@/components/About';
+import Points from '@/components/Points';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { TEMPO_TESTNET } from '@/config/web3';
+import { ensureUser, awardPoints, checkDailyLogin } from '@/lib/points';
 
 // Format networks for MetaMask
 const NETWORKS = {
@@ -28,17 +30,18 @@ const TABS = [
   { id: 'earn',    label: '💰 Earn' },
   { id: 'wallet',  label: '🏦 Balances' },
   { id: 'history', label: '📜 History' },
+  { id: 'points',  label: '🏆 Points' },
   { id: 'guide',   label: '📚 Guide' },
   { id: 'about',   label: 'ℹ️ About' },
 ];
 
 // Mobile bottom nav — only 5 most important tabs
 const MOBILE_TABS = [
-  { id: 'swap',    icon: '⇄', label: 'Swap' },
+  { id: 'swap',    icon: '⇄',  label: 'Swap' },
   { id: 'orders',  icon: '📋', label: 'Orders' },
   { id: 'earn',    icon: '💰', label: 'Earn' },
+  { id: 'points',  icon: '🏆', label: 'Points' },
   { id: 'wallet',  icon: '🏦', label: 'Wallet' },
-  { id: 'history', icon: '📜', label: 'History' },
   { id: 'guide',   icon: '📚', label: 'Guide' },
 ];
 
@@ -155,6 +158,41 @@ export default function Home() {
   }, [mounted]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 4000); };
+
+  // Read ?ref= URL param on mount
+  const [pendingRef, setPendingRef] = useState('');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) setPendingRef(ref);
+  }, []);
+
+  // On wallet connect: register user, award points, handle referral
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (!isConnected || !address || initializedRef.current) return;
+    initializedRef.current = true;
+    (async () => {
+      const result = await ensureUser(address, pendingRef);
+      if (result?.isNew) {
+        await awardPoints(address, 'WALLET_CONNECT');
+        showToast('🎉 Welcome! +50 TEMPO Points earned for connecting!');
+        if (result.referredBy) {
+          await awardPoints(address, 'REFERRAL_SIGNUP');
+          await awardPoints(result.referredBy, 'REFERRAL_GIVEN');
+        }
+      } else {
+        const gotDaily = await checkDailyLogin(address);
+        if (gotDaily) showToast('🌅 Daily login bonus: +5 TEMPO Points!');
+      }
+    })();
+  }, [isConnected, address, pendingRef]);
+
+  // Reset on disconnect so re-connect works
+  useEffect(() => {
+    if (!isConnected) initializedRef.current = false;
+  }, [isConnected]);
 
   const switchOrAddNetwork = async (chainIdToConnect) => {
     const targetNetwork = NETWORKS[chainIdToConnect];
@@ -341,6 +379,7 @@ export default function Home() {
           {activeTab === 'earn'    && <ErrorBoundary><Earn currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} /></ErrorBoundary>}
           {activeTab === 'wallet'  && <ErrorBoundary><Balances currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} /></ErrorBoundary>}
           {activeTab === 'history' && <ErrorBoundary><History currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} /></ErrorBoundary>}
+          {activeTab === 'points'  && <ErrorBoundary><Points onConnect={() => setShowWalletModal(true)} pendingRef={pendingRef} /></ErrorBoundary>}
           {activeTab === 'guide'   && <ErrorBoundary><Guide /></ErrorBoundary>}
           {activeTab === 'about'   && <ErrorBoundary><About /></ErrorBoundary>}
 

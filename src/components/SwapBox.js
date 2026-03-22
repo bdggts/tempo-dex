@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, getTokensForChain } from '@/config/web3';
+import { awardPoints } from '@/lib/points';
 
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
 
@@ -212,6 +213,13 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     }
   });
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
+
+  // Award points on successful swap
+  useEffect(() => {
+    if (isSuccess && txHash && address) {
+      awardPoints(address, 'SWAP', txHash).catch(() => {});
+    }
+  }, [isSuccess, txHash, address]);
 
   const handleSwap = () => {
     if (!isConnected) { onConnect(); return; }

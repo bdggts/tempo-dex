@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, TICK_SPACING, MIN_TICK, MAX_TICK, tickToPrice, formatTick, PRICE_SCALE, getTokensForChain } from '@/config/web3';
+import { awardPoints } from '@/lib/points';
 
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
 
@@ -40,6 +41,13 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
     }
   });
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
+
+  // Award points on successful order placement
+  useEffect(() => {
+    if (isSuccess && txHash && address) {
+      awardPoints(address, 'ORDER', txHash).catch(() => {});
+    }
+  }, [isSuccess, txHash, address]);
 
   // Read BOTH selectedToken balance AND pUSD balance separately
   const quoteToken = getTokensForChain(currentNetworkId).find(t => t.isQuoteToken);
