@@ -18,6 +18,7 @@ export function walletToRefCode(wallet) {
 }
 
 // ─── Ensure user exists in DB ────────────────────────────────────────────────
+// NOTE: referral points are NOT awarded here — they unlock after Twitter + 1 tx
 export async function ensureUser(wallet, referredByCode = null) {
   if (!wallet) return null;
   const ref_code = walletToRefCode(wallet);
@@ -29,12 +30,11 @@ export async function ensureUser(wallet, referredByCode = null) {
     .single();
 
   if (existing) {
-    // Update last_seen
     await supabase.from('users').update({ last_seen: new Date().toISOString() }).eq('wallet', wallet.toLowerCase());
     return { user: existing, isNew: false };
   }
 
-  // New user
+  // New user — find referrer if any
   let referred_by = null;
   if (referredByCode) {
     const { data: referrer } = await supabase
@@ -42,16 +42,55 @@ export async function ensureUser(wallet, referredByCode = null) {
       .select('wallet')
       .eq('referral_code', referredByCode.toUpperCase())
       .single();
-    if (referrer) referred_by = referrer.wallet;
+    if (referrer && referrer.wallet !== wallet.toLowerCase()) {
+      referred_by = referrer.wallet;
+    }
   }
 
   const { data: newUser } = await supabase
     .from('users')
-    .insert({ wallet: wallet.toLowerCase(), referral_code: ref_code, referred_by })
+    .insert({ wallet: wallet.toLowerCase(), referral_code: ref_code, referred_by, referral_unlocked: false })
     .select()
     .single();
 
   return { user: newUser, isNew: true, referredBy: referred_by };
+}
+
+// ─── Check & unlock referral points (anti-sybil) ─────────────────────────────
+// Referral points unlock ONLY when user has:
+//   1. Claimed Twitter follow
+//   2. Done at least 1 real on-chain tx (SWAP or ORDER)
+export async function checkReferralUnlock(wallet) {
+  if (!wallet) return false;
+  const user = await getUserData(wallet);
+  if (!user) return false;
+  if (!user.referred_by) return false;          // not referred
+  if (user.referral_unlocked) return false;     // already unlocked
+
+  const hasTwitter = !!user.twitter_followed;
+
+  // Check at least 1 real on-chain tx
+  const { data: txs } = await supabase
+    .from('points_history')
+    .select('id')
+    .eq('wallet', wallet.toLowerCase())
+    .in('action', ['SWAP', 'ORDER', 'EARN'])
+    .limit(1);
+  const hasTx = txs && txs.length > 0;
+
+  if (!hasTwitter || !hasTx) return false;
+
+  // All conditions met — unlock referral points
+  await supabase.from('users')
+    .update({ referral_unlocked: true })
+    .eq('wallet', wallet.toLowerCase());
+
+  // Award new user their signup bonus
+  await awardPoints(wallet, 'REFERRAL_SIGNUP');
+  // Award referrer their bonus
+  await awardPoints(user.referred_by, 'REFERRAL_GIVEN');
+
+  return true;
 }
 
 // ─── Award points ─────────────────────────────────────────────────────────────
@@ -70,7 +109,6 @@ export async function awardPoints(wallet, actionKey, txHash = null) {
     if (dup) return;
   }
 
-  // Insert history row
   await supabase.from('points_history').insert({
     wallet: wallet.toLowerCase(),
     action: actionKey,
@@ -78,7 +116,6 @@ export async function awardPoints(wallet, actionKey, txHash = null) {
     tx_hash: txHash,
   });
 
-  // Add to user total
   await supabase.rpc('increment_points', { user_wallet: wallet.toLowerCase(), pts: action.points });
 }
 
@@ -127,6 +164,9 @@ export async function claimTwitterFollow(wallet) {
     .eq('wallet', wallet.toLowerCase());
 
   await awardPoints(wallet, 'TWITTER_FOLLOW');
+
+  // Try to unlock referral now that Twitter is done
+  await checkReferralUnlock(wallet);
   return true;
 }
 
