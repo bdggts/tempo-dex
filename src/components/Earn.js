@@ -530,6 +530,11 @@ export default function Earn({ currentNetworkId, onConnect }) {
     if (!dep) return Promise.resolve();
     setWithdrawMsg('');
     try {
+      // Read pending yield BEFORE claiming (to calculate 1% fee)
+      const token = Object.values(TOKENS).find(t => t.address.toLowerCase() === dep.token.toLowerCase());
+      const decimals = token?.decimals || 6;
+
+      // Step 1: Claim yield from contract → tokens go to user's wallet
       await writeContractAsync({
         address: registryAddr,
         abi: REGISTRY_ABI,
@@ -538,10 +543,37 @@ export default function Earn({ currentNetworkId, onConnect }) {
         chainId: currentNetworkId,
         gas: 4_000_000n,
       });
-      setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+
+      // Step 2: Calculate 1% platform fee from earned yield
+      try {
+        const autoYield = dep.earnedYield || 0n;
+        if (autoYield > 0n) {
+          const feeBig = autoYield / 100n; // 1% fee
+          if (feeBig > 0n) {
+            // Auto-transfer 1% fee to ADMIN_WALLET
+            await writeContractAsync({
+              address: dep.token,
+              abi: ERC20_ABI,
+              functionName: 'transfer',
+              args: [ADMIN_WALLET, feeBig],
+              chainId: currentNetworkId,
+              gas: 100_000n,
+            });
+            const feeFormatted = parseFloat(formatUnits(feeBig, decimals)).toFixed(4);
+            setWithdrawMsg(`🌾 Yield claimed! 1% platform fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
+          } else {
+            setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+          }
+        } else {
+          setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+        }
+      } catch {
+        // Fee transfer failed (e.g. insufficient balance) — still show success for main claim
+        setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+      }
+
       // Refetch IMMEDIATELY so yield resets to 0 — prevents double-claim
       refetchDeposits();
-      // Also refetch after slight delay to catch any RPC lag
       setTimeout(() => { refetchDeposits(); setWithdrawMsg(''); }, 3000);
     } catch (err) {
       const msg = err.shortMessage || err.message || '';
