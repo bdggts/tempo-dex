@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
-import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, getTokensForChain } from '@/config/web3';
+import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, ADMIN_WALLET, getTokensForChain } from '@/config/web3';
 import { awardPoints, checkReferralUnlock } from '@/lib/points';
 
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
@@ -214,13 +214,31 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   });
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
 
-  // Award points on successful swap
+  // Separate hook for fee transfer (so it doesn't block the swap)
+  const { writeContract: writeFee } = useWriteContract();
+  const feeChargedRef = useRef(null); // tracks last txHash we charged fee for
+
+  // After swap confirms: collect 0.1% fee + award points
   useEffect(() => {
-    if (isSuccess && txHash && address) {
+    if (isSuccess && txHash && address && tokenOut && feeBigInt > 0n) {
+      // Prevent charging fee twice for same tx
+      if (feeChargedRef.current === txHash) return;
+      feeChargedRef.current = txHash;
+
+      // Collect 0.1% platform fee from user's output token
+      writeFee({
+        address: tokenOut.address,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [ADMIN_WALLET, feeBigInt],
+        chainId: currentNetworkId,
+      });
+
+      // Award TEMPO Points
       awardPoints(address, 'SWAP', txHash).catch(() => {});
       checkReferralUnlock(address).catch(() => {});
     }
-  }, [isSuccess, txHash, address]);
+  }, [isSuccess, txHash, address, tokenOut, feeBigInt, currentNetworkId]);
 
   const handleSwap = () => {
     if (!isConnected) { onConnect(); return; }
