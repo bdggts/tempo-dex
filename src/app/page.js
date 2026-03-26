@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import SwapBox from '@/components/SwapBox';
@@ -25,27 +25,27 @@ const NETWORKS = {
 };
 
 const TABS = [
-  { id: 'swap',    label: '⇄ Swap' },
-  { id: 'orders',  label: '📋 Orders' },
-  { id: 'earn',    label: '💰 Earn' },
-  { id: 'wallet',  label: '🏦 Balances' },
-  { id: 'history', label: '📜 History' },
-  { id: 'points',  label: '🏆 Points' },
-  { id: 'guide',   label: '📚 Guide' },
-  { id: 'about',   label: 'ℹ️ About' },
+  { id: 'swap',    label: 'â‡„ Swap' },
+  { id: 'orders',  label: 'ðŸ“‹ Orders' },
+  { id: 'earn',    label: 'ðŸ’° Earn' },
+  { id: 'wallet',  label: 'ðŸ¦ Balances' },
+  { id: 'history', label: 'ðŸ“œ History' },
+  { id: 'points',  label: 'ðŸ† Points' },
+  { id: 'guide',   label: 'ðŸ“š Guide' },
+  { id: 'about',   label: 'â„¹ï¸ About' },
 ];
 
-// Mobile bottom nav — only 5 most important tabs
+// Mobile bottom nav â€” only 5 most important tabs
 const MOBILE_TABS = [
-  { id: 'swap',    icon: '⇄',  label: 'Swap' },
-  { id: 'orders',  icon: '📋', label: 'Orders' },
-  { id: 'earn',    icon: '💰', label: 'Earn' },
-  { id: 'points',  icon: '🏆', label: 'Points' },
-  { id: 'wallet',  icon: '🏦', label: 'Wallet' },
-  { id: 'guide',   icon: '📚', label: 'Guide' },
+  { id: 'swap',    icon: 'â‡„',  label: 'Swap' },
+  { id: 'orders',  icon: 'ðŸ“‹', label: 'Orders' },
+  { id: 'earn',    icon: 'ðŸ’°', label: 'Earn' },
+  { id: 'points',  icon: 'ðŸ†', label: 'Points' },
+  { id: 'wallet',  icon: 'ðŸ¦', label: 'Wallet' },
+  { id: 'guide',   icon: 'ðŸ“š', label: 'Guide' },
 ];
 
-// ── Wallet Selector Modal ──────────────────────────────────────────────────
+// â”€â”€ Wallet Selector Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function WalletModal({ connectors, connect, onClose }) {
   // Detect mobile without MetaMask injected
   const isMobile = typeof window !== 'undefined' && /iPhone|iPad|Android/i.test(navigator.userAgent);
@@ -60,12 +60,12 @@ function WalletModal({ connectors, connect, onClose }) {
       <div onClick={e => e.stopPropagation()} className="wallet-modal-inner" style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: '24px', width: '380px', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', animation: 'fadeInUp 0.3s ease' }}>
         <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: '18px' }}>Connect a Wallet</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '28px', cursor: 'pointer', lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '28px', cursor: 'pointer', lineHeight: 1 }}>Ã—</button>
         </div>
 
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
-          {/* Mobile Chrome — show MetaMask deep link first */}
+          {/* Mobile Chrome â€” show MetaMask deep link first */}
           {showDeepLink && (
             <a
               href={metamaskDeepLink}
@@ -78,13 +78,13 @@ function WalletModal({ connectors, connect, onClose }) {
               }}
             >
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,107,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
-                🦊
+                ðŸ¦Š
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>Open in MetaMask</div>
                 <div style={{ fontSize: '12px', color: '#f97316' }}>Tap to open & connect MetaMask app</div>
               </div>
-              <span style={{ fontSize: '18px', color: '#f97316' }}>→</span>
+              <span style={{ fontSize: '18px', color: '#f97316' }}>â†’</span>
             </a>
           )}
 
@@ -98,9 +98,9 @@ function WalletModal({ connectors, connect, onClose }) {
               style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-light)', background: 'none', color: 'var(--text-main)', cursor: 'pointer', transition: '0.2s', textAlign: 'left' }}
             >
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                {connector.name.toLowerCase().includes('metamask') ? '🦊' :
-                 connector.name.toLowerCase().includes('coinbase') ? '🛡️' :
-                 connector.name.toLowerCase().includes('walletconnect') ? '🌐' : '🔌'}
+                {connector.name.toLowerCase().includes('metamask') ? 'ðŸ¦Š' :
+                 connector.name.toLowerCase().includes('coinbase') ? 'ðŸ›¡ï¸' :
+                 connector.name.toLowerCase().includes('walletconnect') ? 'ðŸŒ' : 'ðŸ”Œ'}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>{connector.name}</div>
@@ -136,10 +136,10 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [dismissedNetworkAlert, setDismissedNetworkAlert] = useState(false);
-  // Read chainId directly from window.ethereum — wagmi's useChainId can be stale
+  // Read chainId directly from window.ethereum â€” wagmi's useChainId can be stale
   const [liveChainId, setLiveChainId] = useState(null);
 
-  // Fix hydration mismatch — wait for client mount
+  // Fix hydration mismatch â€” wait for client mount
   useEffect(() => { setMounted(true); }, []);
 
   // Read live chainId directly from MetaMask and update on change
@@ -177,14 +177,14 @@ export default function Home() {
       const result = await ensureUser(address, pendingRef);
       if (result?.isNew) {
         await awardPoints(address, 'WALLET_CONNECT');
-        showToast('🎉 Welcome! +50 TEMPO Points earned for connecting!');
+        showToast('ðŸŽ‰ Welcome! +50 TSWAP Points earned for connecting!');
         if (result.referredBy) {
           await awardPoints(address, 'REFERRAL_SIGNUP');
           await awardPoints(result.referredBy, 'REFERRAL_GIVEN');
         }
       } else {
         const gotDaily = await checkDailyLogin(address);
-        if (gotDaily) showToast('🌅 Daily login bonus: +5 TEMPO Points!');
+        if (gotDaily) showToast('ðŸŒ… Daily login bonus: +5 TSWAP Points!');
       }
     })();
   }, [isConnected, address, pendingRef]);
@@ -201,13 +201,13 @@ export default function Home() {
     if (!provider) { try { switchChain?.({ chainId: chainIdToConnect }); } catch {} return; }
     try {
       await provider.request({ method: 'wallet_addEthereumChain', params: [targetNetwork] });
-      showToast(`✅ Switched to ${targetNetwork.chainName}`);
+      showToast(`âœ… Switched to ${targetNetwork.chainName}`);
     } catch (addErr) {
       try {
         await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetNetwork.chainId }] });
-        showToast(`✅ Switched to ${targetNetwork.chainName}`);
+        showToast(`âœ… Switched to ${targetNetwork.chainName}`);
       } catch {
-        showToast(`❌ Could not switch. Please change network inside MetaMask manually.`);
+        showToast(`âŒ Could not switch. Please change network inside MetaMask manually.`);
       }
     }
   };
@@ -231,7 +231,7 @@ export default function Home() {
       <>
         <header>
           <div className="logo">
-            <div className="logo-icon">🔀</div>
+            <div className="logo-icon">ðŸ”€</div>
             <div>TempoSwap</div>
           </div>
           <nav style={{ display: 'flex', gap: '4px', background: 'var(--bg-panel)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
@@ -271,7 +271,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Wrong Network — fullscreen blocking overlay (not on guide/about) */}
+      {/* Wrong Network â€” fullscreen blocking overlay (not on guide/about) */}
       {isConnected && !isCorrectNetwork && !dismissedNetworkAlert && !['guide','about'].includes(activeTab) && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9998,
@@ -281,7 +281,7 @@ export default function Home() {
           padding: '24px',
           backdropFilter: 'blur(8px)',
         }}>
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔴</div>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>ðŸ”´</div>
           <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Wrong Network</h2>
           <p style={{ color: 'var(--text-dim)', textAlign: 'center', marginBottom: '32px', fontSize: '15px', lineHeight: 1.6, maxWidth: '300px' }}>
             TempoSwap runs on <strong style={{ color: 'white' }}>Tempo Testnet</strong>.<br />
@@ -298,12 +298,12 @@ export default function Home() {
               letterSpacing: '0.3px',
             }}
           >
-            🔀 Switch to Tempo Testnet
+            ðŸ”€ Switch to Tempo Testnet
           </button>
           <button onClick={() => { setActiveTab('guide'); setDismissedNetworkAlert(true); }}
             style={{ marginTop: '14px', background: 'none', border: 'none', color: '#818cf8', fontSize: '13px', cursor: 'pointer', padding: '8px', fontWeight: 600 }}
           >
-            📚 How to add network manually
+            ðŸ“š How to add network manually
           </button>
           <button
             onClick={() => disconnect()}
@@ -317,7 +317,7 @@ export default function Home() {
       {/* Header */}
       <header>
         <div className="logo">
-          <div className="logo-icon">🔀</div>
+          <div className="logo-icon">ðŸ”€</div>
           <div>TempoSwap</div>
         </div>
 
@@ -339,7 +339,7 @@ export default function Home() {
             </select>
           </div>
 
-          {/* Faucet shortcut — only on testnet */}
+          {/* Faucet shortcut â€” only on testnet */}
           {isTestnet && (
             <button
               onClick={() => setActiveTab('wallet')}
@@ -352,7 +352,7 @@ export default function Home() {
                 transition: 'all 0.2s',
               }}
             >
-              🚰 Get Tokens
+              ðŸš° Get Tokens
             </button>
           )}
 
@@ -360,7 +360,7 @@ export default function Home() {
             <button className="btn-connect"
               onClick={() => disconnect()}
               style={{ background: 'var(--bg-panel)', color: 'var(--text-main)', border: '1px solid var(--border-light)' }}>
-              {address.slice(0, 6)}…{address.slice(-4)}
+              {address.slice(0, 6)}â€¦{address.slice(-4)}
             </button>
           ) : (
             <button className="btn-connect" onClick={() => setShowWalletModal(true)}>
@@ -386,7 +386,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ── Full-Width Professional Footer ── */}
+      {/* â”€â”€ Full-Width Professional Footer â”€â”€ */}
       <footer style={{
         width: '100%',
         marginTop: '48px',
@@ -422,7 +422,7 @@ export default function Home() {
                   background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '18px', boxShadow: '0 0 20px rgba(255,0,122,0.3)',
-                }}>🔀</div>
+                }}>ðŸ”€</div>
                 <span style={{ fontWeight: 900, fontSize: '20px', background: 'linear-gradient(135deg, #fff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TempoSwap</span>
               </div>
               <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.7, margin: '0 0 20px', maxWidth: '220px' }}>
@@ -431,10 +431,10 @@ export default function Home() {
               {/* Social Icons */}
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {[
-                  { icon: '𝕏', label: 'Twitter', href: 'https://x.com/bdggts' },
-                  { icon: '⌨', label: 'GitHub', href: 'https://github.com/bdggts' },
-                  { icon: '💬', label: 'Discord', href: 'https://discord.com' },
-                  { icon: '✈️', label: 'Telegram', href: 'https://t.me' },
+                  { icon: 'ð•', label: 'Twitter', href: 'https://x.com/bdggts' },
+                  { icon: 'âŒ¨', label: 'GitHub', href: 'https://github.com/bdggts' },
+                  { icon: 'ðŸ’¬', label: 'Discord', href: 'https://discord.com' },
+                  { icon: 'âœˆï¸', label: 'Telegram', href: 'https://t.me' },
                 ].map(s => (
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                     title={s.label}
@@ -501,14 +501,14 @@ export default function Home() {
                 <div style={{ marginTop: '10px' }}>
                   <a href="https://explore.testnet.tempo.xyz" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '12px', color: 'var(--brand-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >🔍 Explorer ↗</a>
+                  >ðŸ” Explorer â†—</a>
                 </div>
                 <div style={{ marginTop: '6px' }}>
                   <a href="https://tempo.xyz" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
                     onMouseEnter={e => e.target.style.color = '#fff'}
                     onMouseLeave={e => e.target.style.color = 'var(--text-dim)'}
-                  >🌐 Tempo Network ↗</a>
+                  >ðŸŒ Tempo Network â†—</a>
                 </div>
               </div>
             </div>
@@ -525,7 +525,7 @@ export default function Home() {
             {[
               { value: '< 1s', label: 'Block Time' },
               { value: '0', label: 'Gas Fees' },
-              { value: '∞', label: 'Liquidity Depth' },
+              { value: 'âˆž', label: 'Liquidity Depth' },
               { value: '100%', label: 'On-Chain' },
             ].map(stat => (
               <div key={stat.label} style={{ textAlign: 'center', flex: '1', minWidth: '100px' }}>
@@ -543,13 +543,13 @@ export default function Home() {
             flexWrap: 'wrap', gap: '10px',
           }}>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              © {new Date().getFullYear()} <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>TempoSwap</span>. All rights reserved. Built on Tempo Network. &nbsp;·&nbsp;
+              Â© {new Date().getFullYear()} <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>TempoSwap</span>. All rights reserved. Built on Tempo Network. &nbsp;Â·&nbsp;
               Made by <a href="https://x.com/bdggts" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-primary)', fontWeight: 700, textDecoration: 'none' }}>@bdggts</a>
             </div>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               {[
-                { label: '📖 Price-Time Priority Orderbook' },
-                { label: '🧪 Testnet — Not Financial Advice' },
+                { label: 'ðŸ“– Price-Time Priority Orderbook' },
+                { label: 'ðŸ§ª Testnet â€” Not Financial Advice' },
               ].map(item => (
                 <span key={item.label} style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.label}</span>
               ))}
@@ -574,3 +574,4 @@ export default function Home() {
     </>
   );
 }
+

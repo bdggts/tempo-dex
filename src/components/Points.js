@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import {
@@ -9,7 +9,7 @@ import {
 const SITE_URL = 'https://tempo-dex.vercel.app';
 
 function shortAddr(addr) {
-  if (!addr) return '—';
+  if (!addr) return 'â€”';
   return addr.slice(0, 6) + '...' + addr.slice(-4);
 }
 
@@ -54,12 +54,12 @@ export default function Points({ onConnect, pendingRef }) {
 
     if (twitterStatus === 'success') {
       const username = params.get('username') || '';
-      setTwitterMsg(`✅ Twitter connected! ${username} — +30 pts earned!`);
+      setTwitterMsg(`âœ… Twitter connected! ${username} â€” +30 pts earned!`);
       load();
     } else if (twitterStatus === 'duplicate') {
-      setTwitterMsg('❌ This Twitter account is already linked to another wallet.');
+      setTwitterMsg('âŒ This Twitter account is already linked to another wallet.');
     } else if (twitterStatus === 'error') {
-      setTwitterMsg('❌ Twitter connection failed. Try again.');
+      setTwitterMsg('âŒ Twitter connection failed. Try again.');
     }
 
     // Clean URL
@@ -82,13 +82,13 @@ export default function Points({ onConnect, pendingRef }) {
 
   const myRank = leaderboard.findIndex(u => u.wallet === address?.toLowerCase()) + 1;
 
-  const RANK_EMOJI = ['🥇','🥈','🥉'];
+  const RANK_EMOJI = ['ðŸ¥‡','ðŸ¥ˆ','ðŸ¥‰'];
 
   if (!isConnected) {
     return (
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', textAlign: 'center', padding: '48px 24px' }}>
-        <div style={{ fontSize: '56px', marginBottom: '16px' }}>🏆</div>
-        <h2 style={{ fontSize: '22px', marginBottom: '8px' }}>TEMPO Points</h2>
+        <div style={{ fontSize: '56px', marginBottom: '16px' }}>ðŸ†</div>
+        <h2 style={{ fontSize: '22px', marginBottom: '8px' }}>TSWAP Points</h2>
         <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '300px', margin: '0 auto 24px' }}>
           Earn points for every action. Points convert to <strong style={{ color: 'var(--brand-primary)' }}>TempoSwap tokens</strong> at TGE.
         </p>
@@ -106,17 +106,17 @@ export default function Points({ onConnect, pendingRef }) {
       <div className="swap-container" style={{ padding: '24px', background: 'linear-gradient(135deg, rgba(255,0,122,0.12), rgba(124,58,237,0.12))', border: '1px solid rgba(255,0,122,0.25)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontSize: '12px', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Your TEMPO Points</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Your TSWAP Points</div>
             <div style={{ fontSize: '48px', fontWeight: 900, background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
               {loading ? '...' : (userData?.points ?? 0).toLocaleString()}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-dim)', marginTop: '6px' }}>
-              {myRank > 0 ? `Rank #${myRank}` : 'Unranked'} · Wallet: {shortAddr(address)}
+              {myRank > 0 ? `Rank #${myRank}` : 'Unranked'} Â· Wallet: {shortAddr(address)}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>Future Value</div>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: '#f59e0b' }}>→ $TEMPO</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#f59e0b' }}>â†’ $TSWAP</div>
             <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>At TGE Airdrop</div>
           </div>
         </div>
@@ -149,11 +149,11 @@ export default function Points({ onConnect, pendingRef }) {
       {/* Referral */}
       <div className="swap-container" style={{ padding: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>🔗 Referral</div>
-          <div style={{ fontSize: '13px', color: 'var(--brand-primary)', fontWeight: 700 }}>{referralCount} referred · +{referralCount * 50} pts</div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>ðŸ”— Referral</div>
+          <div style={{ fontSize: '13px', color: 'var(--brand-primary)', fontWeight: 700 }}>{referralCount} referred Â· +{referralCount * 50} pts</div>
         </div>
         <div style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '10px' }}>
-          Share your link — you get <strong style={{ color: '#fff' }}>50 pts</strong> per referral, they get <strong style={{ color: '#fff' }}>25 pts</strong> on signup.
+          Share your link â€” you get <strong style={{ color: '#fff' }}>50 pts</strong> per referral, they get <strong style={{ color: '#fff' }}>25 pts</strong> on signup.
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input readOnly value={referralLink}
@@ -161,7 +161,7 @@ export default function Points({ onConnect, pendingRef }) {
           />
           <button onClick={copyRef}
             style={{ background: copied ? 'var(--success)' : 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 16px', fontWeight: 700, cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap', transition: 'background 0.2s' }}>
-            {copied ? '✓ Copied!' : 'Copy'}
+            {copied ? 'âœ“ Copied!' : 'Copy'}
           </button>
         </div>
       </div>
@@ -171,25 +171,25 @@ export default function Points({ onConnect, pendingRef }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              𝕏 Connect Twitter
-              {userData?.twitter_followed && <span style={{ fontSize: '11px', background: 'rgba(29,161,242,0.15)', color: '#1da1f2', padding: '2px 8px', borderRadius: '20px', fontWeight: 600 }}>✓ Verified</span>}
+              ð• Connect Twitter
+              {userData?.twitter_followed && <span style={{ fontSize: '11px', background: 'rgba(29,161,242,0.15)', color: '#1da1f2', padding: '2px 8px', borderRadius: '20px', fontWeight: 600 }}>âœ“ Verified</span>}
             </div>
             {userData?.twitter_username
               ? <div style={{ fontSize: '13px', color: '#1da1f2', fontWeight: 600 }}>@{userData.twitter_username}</div>
               : <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Connect your Twitter/X account to earn <strong style={{ color: '#f59e0b' }}>+30 pts</strong> &amp; unlock referral rewards</div>
             }
-            {twitterMsg && <div style={{ fontSize: '12px', marginTop: '6px', color: twitterMsg.startsWith('✅') ? 'var(--success)' : 'var(--danger)' }}>{twitterMsg}</div>}
+            {twitterMsg && <div style={{ fontSize: '12px', marginTop: '6px', color: twitterMsg.startsWith('âœ…') ? 'var(--success)' : 'var(--danger)' }}>{twitterMsg}</div>}
           </div>
           {userData?.twitter_followed
             ? <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'rgba(29,161,242,0.1)', border: '1px solid rgba(29,161,242,0.3)', color: '#1da1f2', fontWeight: 700, fontSize: '13px' }}>
-                ✓ Connected
+                âœ“ Connected
               </div>
             : <button onClick={handleTwitterConnect}
                 style={{ background: '#000', color: '#fff', border: '1px solid #333', borderRadius: '10px', padding: '10px 18px', fontWeight: 700, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
                 onMouseLeave={e => e.currentTarget.style.background = '#000'}
               >
-                𝕏 Connect Twitter
+                ð• Connect Twitter
               </button>
           }
         </div>
@@ -197,7 +197,7 @@ export default function Points({ onConnect, pendingRef }) {
 
       {/* Leaderboard */}
       <div className="swap-container" style={{ padding: '16px' }}>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>🏆 Leaderboard</div>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>ðŸ† Leaderboard</div>
         {leaderboard.length === 0
           ? <div style={{ color: 'var(--text-dim)', fontSize: '13px', textAlign: 'center', padding: '16px' }}>Be the first! Connect & start earning.</div>
           : leaderboard.map((u, i) => {
@@ -235,3 +235,4 @@ export default function Points({ onConnect, pendingRef }) {
     </div>
   );
 }
+
