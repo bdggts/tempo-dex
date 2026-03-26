@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
@@ -7,7 +7,7 @@ import { awardPoints, checkReferralUnlock } from '@/lib/points';
 
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
 
-// â”€â”€ Token Selector Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Token Selector Modal ──────────────────────────────────────────────────────
 function TokenModal({ onSelect, excludeToken, onClose, chainId }) {
   const [search, setSearch] = useState('');
   const tokenList = getTokensForChain(chainId);
@@ -22,7 +22,7 @@ function TokenModal({ onSelect, excludeToken, onClose, chainId }) {
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: '20px', width: '360px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.6)', animation: 'fadeInUp 0.2s ease' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: '16px' }}>Select Token</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }}>Ã—</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
         <div style={{ padding: '12px 16px' }}>
           <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
@@ -58,7 +58,7 @@ function TokenModal({ onSelect, excludeToken, onClose, chainId }) {
   );
 }
 
-// â”€â”€ Main SwapBox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main SwapBox ──────────────────────────────────────────────────────────────
 export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   const { address, isConnected, chainId } = useAccount();
   const { connectors, connect } = useConnect();
@@ -81,7 +81,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     setAmountIn('');
   }, [currentNetworkId]);
 
-  // Read Wallet Balances directly via balanceOf â€” same as Earn.js (useBalance gives wrong decimals on Tempo)
+  // Read Wallet Balances directly via balanceOf — same as Earn.js (useBalance gives wrong decimals on Tempo)
   const { data: rawBalIn } = useReadContract({
     address: tokenIn?.address, abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -114,7 +114,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   };
 
 
-  // Safe parseUnits â€” handles scientific notation like 8.5e+31
+  // Safe parseUnits — handles scientific notation like 8.5e+31
   const safeParseUnits = (value, decimals) => {
     try {
       // Convert scientific notation to plain decimal string
@@ -246,7 +246,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     setTxError('');
 
     if (swapMode === 'direct') {
-      // â”€â”€â”€ Direct Swap (liquidity available in orderbook) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ─── Direct Swap (liquidity available in orderbook) ───────────────────
       const slipBps = BigInt(Math.floor(slippage * 100));
       const totalDeductBps = slipBps + BigInt(PLATFORM_FEE_BPS);
       const minOut = (quotedOut * (10000n - totalDeductBps)) / 10000n;
@@ -256,7 +256,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
         args: [tokenIn.address, tokenOut.address, parsedAmountIn, minOut],
       });
     } else if (swapMode === 'market-order') {
-      // â”€â”€â”€ Market Order fallback (no direct liquidity) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ─── Market Order fallback (no direct liquidity) ──────────────────────
       const baseToken = tokenIn.isQuoteToken ? tokenOut : tokenIn;
       const isBid = tokenIn.isQuoteToken;
       const rawTick = isBid
@@ -272,7 +272,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
         args: [baseToken.address, orderAmount, isBid, marketTick],
       });
     } else {
-      setTxError('âš ï¸ No liquidity available for this pair right now.');
+      setTxError('⚠️ No liquidity available for this pair right now.');
       setTimeout(() => setTxError(''), 6000);
     }
 
@@ -304,14 +304,14 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
 
   const amountOut = quotedOut && !quoteError && amountIn && tokenOut ? formatUnits(quotedOut, tokenOut.decimals) : '';
   const priceDisplay = amountIn && amountOut && !isNaN(amountOut) && tokenIn && tokenOut
-    ? `1 ${tokenIn.symbol} â‰ˆ ${(parseFloat(amountOut) / parseFloat(amountIn)).toFixed(6)} ${tokenOut.symbol}` : null;
+    ? `1 ${tokenIn.symbol} ≈ ${(parseFloat(amountOut) / parseFloat(amountIn)).toFixed(6)} ${tokenOut.symbol}` : null;
 
   // Show empty state when no tokens for this network (AFTER all hooks)
   if (!tokenIn || !tokenOut) {
     return (
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
         <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>ðŸ”</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
           <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>No Tokens on {currentNetworkId === 4217 ? 'Mainnet' : 'Testnet'}</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '340px', margin: '0 auto' }}>
             {currentNetworkId === 4217
@@ -334,7 +334,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
             <button className="active">Swap</button>
           </div>
           <button onClick={() => setShowSettings(!showSettings)}
-            style={{ background: 'none', border: 'none', color: showSettings ? 'var(--brand-primary)' : 'var(--text-dim)', fontSize: '18px', cursor: 'pointer' }}>âš™ï¸</button>
+            style={{ background: 'none', border: 'none', color: showSettings ? 'var(--brand-primary)' : 'var(--text-dim)', fontSize: '18px', cursor: 'pointer' }}>⚙️</button>
         </div>
 
         {showSettings && (
@@ -359,7 +359,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               <button className="token-selector" onClick={() => setModal('in')}>
 
                 <span style={{ marginLeft: '6px', fontWeight: 700 }}>{tokenIn.symbol}</span>
-                <span style={{ opacity: 0.5, fontSize: '12px', marginLeft: '4px' }}>â–¼</span>
+                <span style={{ opacity: 0.5, fontSize: '12px', marginLeft: '4px' }}>▼</span>
               </button>
             </div>
             <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden', gap: '6px' }}>
@@ -384,7 +384,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
           </div>
 
           <div className="switch-wrapper">
-            <button className="switch-btn" onClick={switchTokens}>â†“</button>
+            <button className="switch-btn" onClick={switchTokens}>↓</button>
           </div>
 
           {/* Token Out */}
@@ -398,7 +398,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               <button className="token-selector" onClick={() => setModal('out')}>
 
                 <span style={{ marginLeft: '6px', fontWeight: 700 }}>{tokenOut.symbol}</span>
-                <span style={{ opacity: 0.5, fontSize: '12px', marginLeft: '4px' }}>â–¼</span>
+                <span style={{ opacity: 0.5, fontSize: '12px', marginLeft: '4px' }}>▼</span>
               </button>
             </div>
             <div className="balance-row" style={{ overflow: 'hidden' }}>
@@ -408,8 +408,8 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
 
           {amountIn && !hasLiquidity && (
             <div style={{ padding: '10px 12px', marginTop: '4px', background: 'rgba(255,171,0,0.1)', border: '1px solid rgba(255,171,0,0.25)', borderRadius: '10px', fontSize: '12px', color: 'var(--warning)', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '14px' }}>âš¡</span>
-              <span><strong>Smart Swap Active:</strong> No direct liquidity found. Your swap will auto-place a <strong>Market Order at best price</strong> â€” it fills the moment a matching trade appears!</span>
+              <span style={{ fontSize: '14px' }}>⚡</span>
+              <span><strong>Smart Swap Active:</strong> No direct liquidity found. Your swap will auto-place a <strong>Market Order at best price</strong> — it fills the moment a matching trade appears!</span>
             </div>
           )}
           {priceDisplay && (
@@ -446,28 +446,28 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
                 : !amountIn
                 ? 'Enter an amount'
                 : swapMode === 'market-order'
-                ? `âš¡ Smart Swap: Place Market Order`
-                : `Swap ${tokenIn?.symbol} â†’ ${tokenOut?.symbol}`
+                ? `⚡ Smart Swap: Place Market Order`
+                : `Swap ${tokenIn?.symbol} → ${tokenOut?.symbol}`
               }
             </button>
           )}
 
           {txError && (
             <div style={{ marginTop: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,71,87,0.1)', border: '1px solid var(--danger)', fontSize: '13px', textAlign: 'center', color: 'var(--danger)' }}>
-              âŒ {txError}
+              ❌ {txError}
             </div>
           )}
           {txHash && (
             <div style={{ marginTop: '12px', padding: '12px', borderRadius: '12px', background: isSuccess ? 'rgba(39,174,96,0.1)' : 'var(--bg-card)', border: `1px solid ${isSuccess ? 'var(--success)' : 'var(--border-light)'}`, fontSize: '14px', textAlign: 'center' }}>
               {!isSuccess && (
                 <div>
-                  <div style={{ marginBottom: '4px' }}>ðŸ“¡ Transaction Sent!</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>â³ Executing on Tempo orderbook...</div>
+                  <div style={{ marginBottom: '4px' }}>📡 Transaction Sent!</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>⏳ Executing on Tempo orderbook...</div>
                 </div>
               )}
               {isSuccess && (
                 <div style={{ color: 'var(--success)', fontWeight: 600 }}>
-                  âœ… Swap Confirmed! <a href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-primary)', textDecoration: 'none', marginLeft: '8px' }}>View â†—</a>
+                  ✅ Swap Confirmed! <a href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-primary)', textDecoration: 'none', marginLeft: '8px' }}>View ↗</a>
                 </div>
               )}
             </div>
@@ -477,4 +477,3 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     </>
   );
 }
-
