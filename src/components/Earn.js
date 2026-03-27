@@ -482,8 +482,10 @@ export default function Earn({ currentNetworkId, onConnect }) {
 
   const handleWithdraw = async (index, amountStr, decimals, isFull) => {
     const dep = deposits[index];
-    if (!dep) return Promise.resolve(); // Always return a Promise!
+    if (!dep) return Promise.resolve();
     setWithdrawMsg('');
+    const token = Object.values(TOKENS).find(t => t.address.toLowerCase() === dep.token.toLowerCase());
+    const tokenDecimals = token?.decimals || 6;
     try {
       if (isFull) {
         // Full withdraw — returns principal + yield
@@ -495,12 +497,30 @@ export default function Earn({ currentNetworkId, onConnect }) {
           chainId: currentNetworkId,
           gas: 4_000_000n,
         });
-        setWithdrawMsg('✅ Withdrawn! Principal + yield sent to your wallet.');
+        // 0.5% platform fee on principal
+        try {
+          const feeBig = dep.amount / 200n; // 0.5% = 1/200
+          if (feeBig > 0n) {
+            await writeContractAsync({
+              address: dep.token,
+              abi: ERC20_ABI,
+              functionName: 'transfer',
+              args: [ADMIN_WALLET, feeBig],
+              chainId: currentNetworkId,
+              gas: 100_000n,
+            });
+            const feeFormatted = parseFloat(formatUnits(feeBig, tokenDecimals)).toFixed(4);
+            setWithdrawMsg(`✅ Withdrawn! 0.5% platform fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
+          } else {
+            setWithdrawMsg('✅ Withdrawn! Principal + yield sent to your wallet.');
+          }
+        } catch {
+          setWithdrawMsg('✅ Withdrawn! Principal + yield sent to your wallet.');
+        }
       } else {
         // Partial withdraw — returns specified amount only
-        const { parseUnits } = await import('viem');
-        const safeStr = parseFloat(amountStr).toFixed(decimals);
-        const amountBig = parseUnits(safeStr, decimals);
+        const safeStr = parseFloat(amountStr).toFixed(tokenDecimals);
+        const amountBig = parseUnits(safeStr, tokenDecimals);
         await writeContractAsync({
           address: registryAddr,
           abi: REGISTRY_ABI,
@@ -509,19 +529,37 @@ export default function Earn({ currentNetworkId, onConnect }) {
           chainId: currentNetworkId,
           gas: 4_000_000n,
         });
-        setWithdrawMsg(`✅ Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
+        // 0.5% platform fee on partial amount
+        try {
+          const feeBig = amountBig / 200n;
+          if (feeBig > 0n) {
+            await writeContractAsync({
+              address: dep.token,
+              abi: ERC20_ABI,
+              functionName: 'transfer',
+              args: [ADMIN_WALLET, feeBig],
+              chainId: currentNetworkId,
+              gas: 100_000n,
+            });
+            const feeFormatted = parseFloat(formatUnits(feeBig, tokenDecimals)).toFixed(4);
+            setWithdrawMsg(`✅ Withdrawn! 0.5% fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
+          } else {
+            setWithdrawMsg(`✅ Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
+          }
+        } catch {
+          setWithdrawMsg(`✅ Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
+        }
       }
       setTimeout(() => { refetchDeposits(); setWithdrawMsg(''); }, 6000);
     } catch (err) {
       const msg = err.shortMessage || err.message || '';
-      // Show friendly messages for known errors
       const friendly = msg.includes('wait 1 hour') ? '⏳ Please wait 1 hour between withdrawals (rate limit).'
         : msg.includes('daily') ? '⏳ Daily withdrawal limit reached. Try again tomorrow.'
         : msg.includes('paused') ? '🔴 Contract is paused. Contact admin.'
         : `❌ ${msg || 'Withdrawal failed. Try again.'}`;
       setWithdrawMsg(friendly);
       setTimeout(() => setWithdrawMsg(''), 6000);
-      throw err; // Re-throw so PositionCard .finally() still fires
+      throw err;
     }
   };
 

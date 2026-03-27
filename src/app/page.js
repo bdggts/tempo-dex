@@ -9,8 +9,9 @@ import History from '@/components/History';
 import Guide from '@/components/Guide';
 import About from '@/components/About';
 import Points from '@/components/Points';
+import Admin from '@/components/Admin';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { TEMPO_TESTNET } from '@/config/web3';
+import { TEMPO_TESTNET, ADMIN_WALLET } from '@/config/web3';
 import { ensureUser, awardPoints, checkDailyLogin } from '@/lib/points';
 
 // Format networks for MetaMask
@@ -33,6 +34,7 @@ const TABS = [
   { id: 'points',  label: '🏆 Points' },
   { id: 'guide',   label: '📚 Guide' },
   { id: 'about',   label: 'ℹ️ About' },
+  { id: 'admin',   label: '🔑 Admin', adminOnly: true },
 ];
 
 // Mobile bottom nav — only 5 most important tabs
@@ -322,7 +324,7 @@ export default function Home() {
         </div>
 
         <nav style={{ display: 'flex', gap: '4px', background: 'var(--bg-panel)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-          {TABS.map(tab => (
+          {TABS.filter(tab => !tab.adminOnly || address?.toLowerCase() === ADMIN_WALLET.toLowerCase()).map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               title={tab.desc}
               style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px', transition: '0.15s', background: activeTab === tab.id ? 'var(--brand-primary)' : 'transparent', color: activeTab === tab.id ? 'white' : 'var(--text-dim)' }}>
@@ -382,6 +384,7 @@ export default function Home() {
           {activeTab === 'points'  && <ErrorBoundary><Points onConnect={() => setShowWalletModal(true)} pendingRef={pendingRef} /></ErrorBoundary>}
           {activeTab === 'guide'   && <ErrorBoundary><Guide /></ErrorBoundary>}
           {activeTab === 'about'   && <ErrorBoundary><About /></ErrorBoundary>}
+          {activeTab === 'admin'   && <ErrorBoundary><Admin isConnected={isConnected} address={address} /></ErrorBoundary>}
 
         </div>
       </main>
