@@ -328,20 +328,31 @@ export default function Home() {
           <div>TempoSwap</div>
         </div>
 
-        <nav style={{ display: 'flex', gap: '4px', background: 'var(--bg-panel)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+        <nav style={{ display: 'flex', gap: '2px', background: 'rgba(16,17,24,0.6)', padding: '3px', borderRadius: '14px', border: '1px solid var(--border-glass)', backdropFilter: 'blur(12px)' }}>
           {TABS.filter(tab => !tab.adminOnly || address?.toLowerCase() === ADMIN_WALLET.toLowerCase()).map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               title={tab.desc}
-              style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px', transition: '0.15s', background: activeTab === tab.id ? 'var(--brand-primary)' : 'transparent', color: activeTab === tab.id ? 'white' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              style={{
+                padding: '8px 14px', borderRadius: '11px', border: 'none', cursor: 'pointer',
+                fontWeight: 600, fontSize: '13px',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                background: activeTab === tab.id ? 'var(--brand-primary)' : 'transparent',
+                color: activeTab === tab.id ? 'white' : 'var(--text-dim)',
+                boxShadow: activeTab === tab.id ? '0 2px 12px rgba(255,0,122,0.35)' : 'none',
+                display: 'flex', alignItems: 'center', gap: '5px',
+              }}
+              onMouseEnter={e => { if (activeTab !== tab.id) { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; } }}
+              onMouseLeave={e => { if (activeTab !== tab.id) { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.background = 'transparent'; } }}
+            >
               {tab.icon} {tab.label}
             </button>
           ))}
         </nav>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{ background: 'var(--bg-panel)', padding: '0px 10px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: isCorrectNetwork ? 'var(--success)' : 'var(--danger)', boxShadow: `0 0 6px ${isCorrectNetwork ? 'var(--success)' : 'var(--danger)'}` }} />
-            <select value={activeChainId} onChange={handleNetworkChange} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontWeight: 600, outline: 'none', padding: '7px 0', cursor: 'pointer' }}>
+          <div style={{ background: 'rgba(16,17,24,0.6)', padding: '0px 12px', borderRadius: '50px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-glass)', display: 'flex', alignItems: 'center', gap: '6px', backdropFilter: 'blur(12px)' }}>
+            <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: isCorrectNetwork ? 'var(--success)' : 'var(--danger)', boxShadow: `0 0 8px ${isCorrectNetwork ? 'var(--success)' : 'var(--danger)'}`, animation: 'pulse 2s ease-in-out infinite' }} />
+            <select value={activeChainId} onChange={handleNetworkChange} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontWeight: 600, outline: 'none', padding: '8px 0', cursor: 'pointer', fontSize: '13px' }}>
               <option value={TEMPO_TESTNET.id} style={{ background: 'var(--bg-card)', color: 'white' }}>Tempo Testnet</option>
             </select>
           </div>
@@ -394,23 +405,23 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ── Full-Width Professional Footer ── */}
-      <footer style={{
+      <footer className="mobile-footer" style={{
         width: '100%',
         marginTop: '48px',
-        paddingBottom: '90px', // space for mobile nav
+        paddingBottom: '90px',
         position: 'relative',
       }}>
         {/* Gradient top border */}
         <div style={{
           height: '1px',
-          background: 'linear-gradient(90deg, transparent, var(--brand-primary), var(--brand-secondary), transparent)',
-          marginBottom: '0',
+          background: 'linear-gradient(90deg, transparent 5%, var(--brand-primary), var(--brand-secondary), transparent 95%)',
+          opacity: 0.6,
         }} />
 
         <div style={{
-          background: 'rgba(9,9,12,0.95)',
-          backdropFilter: 'blur(20px)',
+          background: 'rgba(10,11,15,0.9)',
+          backdropFilter: 'blur(24px) saturate(1.5)',
+          WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
           padding: '48px 32px 0',
         }}>
           {/* Main grid */}
@@ -447,14 +458,15 @@ export default function Home() {
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                     title={s.label}
                     style={{
-                      width: '36px', height: '36px', borderRadius: '10px',
-                      background: 'var(--bg-card)', border: '1px solid var(--border-light)',
+                      width: '38px', height: '38px', borderRadius: '12px',
+                      background: 'rgba(22,24,33,0.6)', border: '1px solid var(--border-glass)',
+                      backdropFilter: 'blur(8px)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '16px', textDecoration: 'none', color: 'var(--text-dim)',
-                      transition: 'all 0.2s',
+                      textDecoration: 'none', color: 'var(--text-dim)',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; e.currentTarget.style.background = 'rgba(255,0,122,0.1)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; e.currentTarget.style.background = 'rgba(255,0,122,0.12)'; e.currentTarget.style.color = 'var(--brand-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(255,0,122,0.2)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-glass)'; e.currentTarget.style.background = 'rgba(22,24,33,0.6)'; e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                   >{s.icon}</a>
                 ))}
               </div>
@@ -530,15 +542,15 @@ export default function Home() {
             borderTop: '1px solid var(--border-light)',
             borderBottom: '1px solid var(--border-light)',
           }}>
-            {[
+          {[
               { value: '< 1s', label: 'Block Time' },
               { value: '0', label: 'Gas Fees' },
               { value: '∞', label: 'Liquidity Depth' },
               { value: '100%', label: 'On-Chain' },
             ].map(stat => (
               <div key={stat.label} style={{ textAlign: 'center', flex: '1', minWidth: '100px' }}>
-                <div style={{ fontSize: '22px', fontWeight: 900, background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{stat.value}</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+                <div style={{ fontSize: '24px', fontWeight: 900, background: 'var(--brand-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>{stat.value}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{stat.label}</div>
               </div>
             ))}
           </div>
