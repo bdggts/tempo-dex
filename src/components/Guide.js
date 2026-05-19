@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
+import { FoxIcon, GlobeIcon, DropletIcon, LinkIcon, SwapIcon, OrdersIcon, WalletIcon, BookIcon, InfoIcon, EarnIcon, CheckCircleIcon, XCircleIcon } from '@/components/Icons';
 
 const STEPS = [
   {
     num: '01',
     title: 'Install MetaMask',
-    icon: '🦊',
+    icon: <FoxIcon size={24} color="#f97316"/>,
     desc: 'Download and install MetaMask browser extension from metamask.io',
     detail: 'MetaMask is a crypto wallet that lets you interact with blockchain applications. Install it from the Chrome Web Store or Firefox Add-ons.',
     link: 'https://metamask.io/download/',
@@ -14,12 +15,12 @@ const STEPS = [
   {
     num: '02',
     title: 'Add Tempo Networks',
-    icon: '🌐',
+    icon: <GlobeIcon size={24} color="#60a5fa"/>,
     desc: 'One-click add Tempo Mainnet or Testnet to MetaMask',
     detail: 'Click the button below to instantly add the network to MetaMask, or add manually using the details shown:',
     networks: [
       {
-        label: '🟢 Mainnet',
+        label: 'Mainnet',
         color: '#2ecc71',
         chainParams: {
           chainId: '0x1079',
@@ -37,7 +38,7 @@ const STEPS = [
         ],
       },
       {
-        label: '🟠 Testnet',
+        label: 'Testnet',
         color: '#f39c12',
         chainParams: {
           chainId: '0xa5bf',
@@ -59,7 +60,7 @@ const STEPS = [
   {
     num: '03',
     title: 'Get Free Testnet Tokens',
-    icon: '🚰',
+    icon: <DropletIcon size={24} color="#f59e0b"/>,
     desc: 'Use the Tempo Faucet to get 1M of each stablecoin — FREE!',
     detail: 'Open your terminal/command prompt and run this command (replace YOUR_ADDRESS with your MetaMask address):',
     code: `curl -X POST https://rpc.moderato.tempo.xyz \\
@@ -70,28 +71,28 @@ const STEPS = [
   {
     num: '04',
     title: 'Connect Wallet',
-    icon: '🔗',
+    icon: <LinkIcon size={24} color="#a78bfa"/>,
     desc: 'Click "Connect Wallet" on TempoSwap to link your MetaMask',
     detail: 'TempoSwap will automatically try to add the Tempo network. If it fails, add it manually (Step 2). Once connected, your address will show in the header.',
   },
   {
     num: '05',
     title: 'Swap Tokens',
-    icon: '⇄',
+    icon: <SwapIcon size={24} color="var(--brand-primary)"/>,
     desc: 'Go to the Swap tab and trade between stablecoins instantly',
     detail: 'Select input/output tokens, enter the amount, and click Swap. The trade executes against Tempo\'s on-chain orderbook with price-time priority. Gas fees are 100% sponsored!',
   },
   {
     num: '06',
     title: 'Place Limit Orders',
-    icon: '📋',
+    icon: <OrdersIcon size={24} color="#60a5fa"/>,
     desc: 'Go to Orders tab to place limit orders at your desired price tick',
     detail: 'Choose Buy or Sell, set your price tick using the slider (−2% to +2%), and place your order. Enable Flip Orders to automatically recreate orders on the opposite side when filled — great for passive earning!',
   },
   {
     num: '07',
     title: 'Check Balances & Withdraw',
-    icon: '🏦',
+    icon: <WalletIcon size={24} color="#34d399"/>,
     desc: 'View your internal exchange balances and withdraw to wallet',
     detail: 'When your orders fill, proceeds credit to your internal exchange balance. Go to the Balances tab to see your funds and withdraw them to your MetaMask wallet anytime.',
   },
@@ -103,7 +104,7 @@ export default function Guide() {
   return (
     <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', maxWidth: '600px' }}>
       <div style={{ padding: '20px', borderBottom: '1px solid var(--border-light)' }}>
-        <h2 style={{ fontSize: '22px', marginBottom: '6px' }}>📚 Getting Started Guide</h2>
+        <h2 style={{ fontSize: '22px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}><BookIcon size={22}/> Getting Started Guide</h2>
         <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6 }}>
           Follow these steps to start using TempoSwap on Mainnet or Testnet.<br />
           Testnet tokens are <strong style={{ color: 'var(--success)' }}>FREE</strong> — no real money needed!
@@ -124,7 +125,7 @@ export default function Guide() {
               border: `1px solid ${expanded === i ? 'var(--brand-primary)' : 'var(--border-light)'}`,
               transition: '0.2s',
             }}>
-              <span style={{ fontSize: '28px' }}>{step.icon}</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>{step.icon}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '11px', color: 'var(--brand-primary)', fontWeight: 700, marginBottom: '2px' }}>STEP {step.num}</div>
                 <div style={{ fontWeight: 700, fontSize: '15px' }}>{step.title}</div>
@@ -158,14 +159,14 @@ export default function Guide() {
                       onClick={async (e) => {
                           e.stopPropagation();
                           const provider = typeof window !== 'undefined' && window.ethereum;
-                          if (!provider) { alert('🦊 Please install MetaMask first!'); return; }
+                          if (!provider) { alert('Please install MetaMask first!'); return; }
                           try {
                             // Try switch first — handles already-added networks
                             await provider.request({
                               method: 'wallet_switchEthereumChain',
                               params: [{ chainId: net.chainParams.chainId }],
                             });
-                            alert(`✅ Switched to ${net.chainParams.chainName}!`);
+                            alert(`Switched to ${net.chainParams.chainName}!`);
                           } catch (switchErr) {
                             if (switchErr.code === 4902 || switchErr.code === -32603) {
                               // Not found — add it
@@ -174,12 +175,12 @@ export default function Guide() {
                                   method: 'wallet_addEthereumChain',
                                   params: [net.chainParams],
                                 });
-                                alert(`✅ ${net.chainParams.chainName} added to MetaMask!`);
+                                alert(`${net.chainParams.chainName} added to MetaMask!`);
                               } catch (addErr) {
-                                alert(`❌ ${addErr.message || 'Could not add network'}`);
+                                alert(`${addErr.message || 'Could not add network'}`);
                               }
                             } else {
-                              alert(`❌ ${switchErr.message || 'Could not switch network'}`);
+                              alert(`${switchErr.message || 'Could not switch network'}`);
                             }
                           }
                         }}
@@ -203,7 +204,7 @@ export default function Guide() {
                         onMouseEnter={(e) => { e.currentTarget.style.background = `${net.color}35`; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = `${net.color}20`; }}
                       >
-                        🦊 Add {net.chainParams.chainName} to MetaMask
+                        Add {net.chainParams.chainName} to MetaMask
                       </button>
                     )}
                   </div>
@@ -231,7 +232,7 @@ export default function Guide() {
                 {/* Note */}
                 {step.note && (
                   <div style={{ background: 'rgba(39,174,96,0.1)', border: '1px solid var(--success)', borderRadius: '8px', padding: '10px 14px', fontSize: '12px', color: 'var(--success)', fontWeight: 600 }}>
-                    💰 {step.note}
+                    {step.note}
                   </div>
                 )}
 
@@ -249,7 +250,7 @@ export default function Guide() {
 
         {/* FAQ Section */}
         <div style={{ marginTop: '20px', padding: '16px', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-light)' }}>
-          <h3 style={{ fontSize: '16px', marginBottom: '12px' }}>❓ FAQ</h3>
+          <h3 style={{ fontSize: '16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}><InfoIcon size={16}/> FAQ</h3>
           
           <div style={{ fontSize: '13px', lineHeight: 1.7 }}>
             <div style={{ marginBottom: '12px' }}>

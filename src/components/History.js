@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAccount, usePublicClient, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatUnits } from 'viem';
 import { DEX_ADDRESS, DEX_ABI, TOKENS, formatTick, tickToPrice } from '@/config/web3';
+import { HistoryIcon, CheckCircleIcon, XCircleIcon, ExternalLinkIcon, WarningIcon, BarChartIcon, OrdersIcon } from '@/components/Icons';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -59,12 +60,12 @@ function OrderRow({ order, currentNetworkId }) {
       }
 
       setCancelStep('done');
-      setCancelMsg(`✅ Cancelled! ${escrowToken.symbol} returned to your wallet.`);
+      setCancelMsg(`Cancelled! ${escrowToken.symbol} returned to your wallet.`);
       setTimeout(() => setCancelMsg(''), 8000);
     } catch (err) {
       setCancelStep('error');
       const msg = err.shortMessage || err.message || 'Cancel failed';
-      setCancelMsg(`❌ ${msg.slice(0, 80)}`);
+      setCancelMsg(`${msg.slice(0, 80)}`);
       setTimeout(() => { setCancelStep('idle'); setCancelMsg(''); }, 6000);
     }
   };
@@ -133,11 +134,11 @@ function OrderRow({ order, currentNetworkId }) {
               border: `1px solid ${cancelStep === 'withdrawing' ? 'rgba(52,211,153,0.3)' : 'rgba(255, 71, 87, 0.2)'}`,
               borderRadius: '6px', cursor: isBusy ? 'not-allowed' : 'pointer', transition: '0.2s', whiteSpace: 'nowrap',
             }}>
-            {cancelStep === 'cancelling' ? '⏳ Cancelling...' : cancelStep === 'withdrawing' ? '⏳ Withdrawing...' : '✕ Cancel'}
+            {cancelStep === 'cancelling' ? 'Cancelling...' : cancelStep === 'withdrawing' ? 'Withdrawing...' : '✕ Cancel'}
           </button>
         )}
         {cancelMsg && (
-          <div style={{ fontSize: '11px', color: cancelMsg.startsWith('✅') ? 'var(--success)' : 'var(--danger)', textAlign: 'right', maxWidth: '140px', lineHeight: 1.3 }}>
+          <div style={{ fontSize: '11px', color: cancelMsg.includes('Cancelled') ? 'var(--success)' : 'var(--danger)', textAlign: 'right', maxWidth: '140px', lineHeight: 1.3 }}>
             {cancelMsg}
           </div>
         )}
@@ -161,7 +162,7 @@ function SwapRow({ swap }) {
         <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>Time</div>
         <div style={{ fontSize: '12px' }}>{new Date(swap.time).toLocaleString()}</div>
         <div style={{ marginTop: '4px' }}>
-          <a href={`https://${swap.networkId === 4217 ? 'explore.tempo.xyz' : 'explore.testnet.tempo.xyz'}/tx/${swap.txHash}`} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: 'var(--brand-primary)', textDecoration: 'none' }}>View Tx ↗</a>
+          <a href={`https://${swap.networkId === 4217 ? 'explore.tempo.xyz' : 'explore.testnet.tempo.xyz'}/tx/${swap.txHash}`} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: 'var(--brand-primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>View Tx <ExternalLinkIcon size={10}/></a>
         </div>
       </div>
     </div>
@@ -372,7 +373,7 @@ export default function History({ currentNetworkId, onConnect }) {
     return (
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
         <div style={{ padding: '40px', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📜</div>
+          <div style={{ marginBottom: '16px' }}><HistoryIcon size={48} color="var(--text-dim)"/></div>
           <h3 style={{ marginBottom: '8px' }}>Order History</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
             Connect your wallet to view your active and past limit orders.
@@ -390,18 +391,18 @@ export default function History({ currentNetworkId, onConnect }) {
       <div style={{ padding: '16px', borderBottom: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h2 style={{ fontSize: '20px', marginBottom: '4px' }}>📜 History</h2>
+            <h2 style={{ fontSize: '20px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><HistoryIcon size={20}/> History</h2>
             <p style={{ fontSize: '13px', color: 'var(--text-dim)' }}>Your recent limit orders and local swap history.</p>
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button onClick={() => exportData('csv')} style={{ padding: '6px 10px', background: 'var(--bg-panel)', color: 'var(--text-main)', border: '1px solid var(--border-light)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-panel)'}>
-              📄 CSV
+              CSV
             </button>
             <button onClick={() => exportData('xlsx')} style={{ padding: '6px 10px', background: 'var(--bg-panel)', color: 'var(--success)', border: '1px solid var(--border-light)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-panel)'}>
-              📊 Excel
+              Excel
             </button>
             <button onClick={() => exportData('pdf')} style={{ padding: '6px 10px', background: 'var(--bg-panel)', color: 'var(--danger)', border: '1px solid var(--border-light)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-panel)'}>
-              📑 PDF
+              PDF
             </button>
           </div>
         </div>
@@ -416,7 +417,7 @@ export default function History({ currentNetworkId, onConnect }) {
           <>
             {isLoading && orders.length === 0 && (
               <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-dim)', fontSize: '14px' }}>
-                ⏳ Searching blockchain logs...
+                Searching blockchain logs...
               </div>
             )}
             {error && (
@@ -440,7 +441,7 @@ export default function History({ currentNetworkId, onConnect }) {
         {historyTab === 'swaps' && (
           <>
             <div style={{ padding: '10px 12px', marginBottom: '16px', background: 'rgba(255, 171, 0, 0.1)', color: 'var(--warning)', border: '1px solid rgba(255, 171, 0, 0.2)', borderRadius: '8px', fontSize: '12px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <span style={{ fontSize: '14px' }}>⚠️</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}><WarningIcon size={14} color="var(--warning)"/></span>
               <span style={{ lineHeight: 1.4 }}><strong>Note:</strong> Swap history is saved locally in this browser. Clearing your browser data will permanently delete these records. Download them to keep a copy!</span>
             </div>
             {swaps.length === 0 ? (

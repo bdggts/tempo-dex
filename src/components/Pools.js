@@ -128,7 +128,7 @@ export default function Pools() {
             {isSuccess && 
               <div style={{ color: 'var(--success)' }}>
                 Liquidity Added Successfully! <br/>
-                <a href={`https://explore.tempo.xyz/tx/${txHash}`} target="_blank" style={{ color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold' }}>View on Explorer ↗</a>
+                <a href={`https://explore.tempo.xyz/tx/${txHash}`} target="_blank" style={{ color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 'bold' }}>View on Explorer</a>
               </div>
             }
           </div>

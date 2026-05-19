@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { formatUnits } from 'viem';
 import { ERC20_ABI, TOKENS, getTokensForChain } from '@/config/web3';
+import { WalletIcon, DropletIcon, LockIcon, SearchIcon } from '@/components/Icons';
 
 
 
@@ -150,7 +151,7 @@ export default function Balances({ currentNetworkId, onConnect }) {
         throw new Error(data.error.message || 'Faucet request failed');
       }
       setFaucetStatus('success');
-      setFaucetMsg('🎉 1M of each token sent! Balances will update shortly.');
+      setFaucetMsg('1M of each token sent! Balances will update shortly.');
       setTimeout(() => { setFaucetStatus('idle'); setFaucetMsg(''); }, 5000);
     } catch (err) {
       setFaucetStatus('error');
@@ -171,7 +172,7 @@ export default function Balances({ currentNetworkId, onConnect }) {
             fontSize: '36px', 
             margin: '0 auto 20px',
             boxShadow: '0 8px 24px rgba(255, 0, 122, 0.2)',
-          }}>💳</div>
+          }}><WalletIcon size={36} color="#fff"/></div>
           <h3 style={{ marginBottom: '8px', fontSize: '20px', fontWeight: 700 }}>Wallet Balances</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, marginBottom: '28px', maxWidth: '320px', margin: '0 auto 28px' }}>
             Connect your wallet to view your token balances on the Tempo network.
@@ -253,12 +254,12 @@ export default function Balances({ currentNetworkId, onConnect }) {
             onMouseEnter={(e) => { if (isTestnet && faucetStatus !== 'loading') e.currentTarget.style.background = 'rgba(39,174,96,0.2)'; }}
             onMouseLeave={(e) => { if (isTestnet) e.currentTarget.style.background = 'rgba(39,174,96,0.1)'; }}
           >
-            {faucetStatus === 'loading' ? '⏳' : '🚰'}
+            {faucetStatus === 'loading' ? '' : <DropletIcon size={16}/>}
             {faucetStatus === 'loading'
               ? 'Requesting Tokens...'
               : isTestnet
-              ? '🚰 Claim Free Testnet Tokens'
-              : '🔒 Faucet (Testnet Only)'}
+              ? 'Claim Free Testnet Tokens'
+              : 'Faucet (Testnet Only)'}
           </button>
 
           {faucetMsg && (
@@ -288,7 +289,7 @@ export default function Balances({ currentNetworkId, onConnect }) {
           ))
         ) : (
           <div style={{ padding: '40px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '36px', marginBottom: '12px' }}>🔍</div>
+            <div style={{ marginBottom: '12px' }}><SearchIcon size={36} color="var(--text-dim)"/></div>
             <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px', color: 'var(--text-main)' }}>No tokens on this network</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
               Switch to <strong style={{ color: networkColor === '#f39c12' ? '#2ecc71' : '#f39c12' }}>{currentNetworkId === 4217 ? 'Testnet' : 'Mainnet'}</strong> to see your tokens,<br/>or the tokens for this network haven't been configured yet.

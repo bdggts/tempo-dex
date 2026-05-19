@@ -13,6 +13,13 @@ import Admin from '@/components/Admin';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { TEMPO_TESTNET, ADMIN_WALLET } from '@/config/web3';
 import { ensureUser, awardPoints, checkDailyLogin } from '@/lib/points';
+import {
+  SwapIcon, OrdersIcon, EarnIcon, WalletIcon, HistoryIcon,
+  TrophyIcon, BookIcon, InfoIcon, KeyIcon, FoxIcon, ShieldIcon,
+  GlobeIcon, PlugIcon, AlertCircleIcon, DropletIcon,
+  TwitterIcon, GithubIcon, DiscordIcon, TelegramIcon,
+  SearchIcon, ExternalLinkIcon, SwapIcon as LogoIcon
+} from '@/components/Icons';
 
 // Format networks for MetaMask
 const NETWORKS = {
@@ -26,25 +33,25 @@ const NETWORKS = {
 };
 
 const TABS = [
-  { id: 'swap',    label: '⇄ Swap' },
-  { id: 'orders',  label: '📋 Orders' },
-  { id: 'earn',    label: '💰 Earn' },
-  { id: 'wallet',  label: '🏦 Balances' },
-  { id: 'history', label: '📜 History' },
-  { id: 'points',  label: '🏆 Points' },
-  { id: 'guide',   label: '📚 Guide' },
-  { id: 'about',   label: 'ℹ️ About' },
-  { id: 'admin',   label: '🔑 Admin', adminOnly: true },
+  { id: 'swap',    icon: <SwapIcon size={14}/>,    label: 'Swap' },
+  { id: 'orders',  icon: <OrdersIcon size={14}/>,  label: 'Orders' },
+  { id: 'earn',    icon: <EarnIcon size={14}/>,    label: 'Earn' },
+  { id: 'wallet',  icon: <WalletIcon size={14}/>,  label: 'Balances' },
+  { id: 'history', icon: <HistoryIcon size={14}/>, label: 'History' },
+  { id: 'points',  icon: <TrophyIcon size={14}/>,  label: 'Points' },
+  { id: 'guide',   icon: <BookIcon size={14}/>,    label: 'Guide' },
+  { id: 'about',   icon: <InfoIcon size={14}/>,    label: 'About' },
+  { id: 'admin',   icon: <KeyIcon size={14}/>,     label: 'Admin', adminOnly: true },
 ];
 
 // Mobile bottom nav — only 5 most important tabs
 const MOBILE_TABS = [
-  { id: 'swap',    icon: '⇄',  label: 'Swap' },
-  { id: 'orders',  icon: '📋', label: 'Orders' },
-  { id: 'earn',    icon: '💰', label: 'Earn' },
-  { id: 'points',  icon: '🏆', label: 'Points' },
-  { id: 'wallet',  icon: '🏦', label: 'Wallet' },
-  { id: 'guide',   icon: '📚', label: 'Guide' },
+  { id: 'swap',    icon: <SwapIcon size={18}/>,    label: 'Swap' },
+  { id: 'orders',  icon: <OrdersIcon size={18}/>,  label: 'Orders' },
+  { id: 'earn',    icon: <EarnIcon size={18}/>,    label: 'Earn' },
+  { id: 'points',  icon: <TrophyIcon size={18}/>,  label: 'Points' },
+  { id: 'wallet',  icon: <WalletIcon size={18}/>,  label: 'Wallet' },
+  { id: 'guide',   icon: <BookIcon size={18}/>,    label: 'Guide' },
 ];
 
 // ── Wallet Selector Modal ──────────────────────────────────────────────────
@@ -79,14 +86,14 @@ function WalletModal({ connectors, connect, onClose }) {
                 color: 'var(--text-main)', transition: '0.2s',
               }}
             >
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,107,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
-                🦊
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,107,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FoxIcon size={22} color="#f97316"/>
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>Open in MetaMask</div>
                 <div style={{ fontSize: '12px', color: '#f97316' }}>Tap to open & connect MetaMask app</div>
               </div>
-              <span style={{ fontSize: '18px', color: '#f97316' }}>→</span>
+              <span style={{ fontSize: '18px', color: '#f97316' }}><ExternalLinkIcon size={16} color="#f97316"/></span>
             </a>
           )}
 
@@ -99,10 +106,10 @@ function WalletModal({ connectors, connect, onClose }) {
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
               style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-light)', background: 'none', color: 'var(--text-main)', cursor: 'pointer', transition: '0.2s', textAlign: 'left' }}
             >
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                {connector.name.toLowerCase().includes('metamask') ? '🦊' :
-                 connector.name.toLowerCase().includes('coinbase') ? '🛡️' :
-                 connector.name.toLowerCase().includes('walletconnect') ? '🌐' : '🔌'}
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {connector.name.toLowerCase().includes('metamask') ? <FoxIcon size={22} color="#f97316"/> :
+                 connector.name.toLowerCase().includes('coinbase') ? <ShieldIcon size={22} color="#4f8fea"/> :
+                 connector.name.toLowerCase().includes('walletconnect') ? <GlobeIcon size={22} color="#3b99fc"/> : <PlugIcon size={22}/>}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '16px' }}>{connector.name}</div>
@@ -179,14 +186,12 @@ export default function Home() {
       const result = await ensureUser(address, pendingRef);
       if (result?.isNew) {
         await awardPoints(address, 'WALLET_CONNECT');
-        showToast('🎉 Welcome! +50 TSWAP Points earned for connecting!');
-        if (result.referredBy) {
-          await awardPoints(address, 'REFERRAL_SIGNUP');
-          await awardPoints(result.referredBy, 'REFERRAL_GIVEN');
-        }
+        showToast('Welcome! +50 TSWAP Points earned for connecting!');
+        // Referral points are NOT awarded here — they unlock via checkReferralUnlock()
+        // only after the user follows Twitter + does 1 real on-chain tx (anti-sybil)
       } else {
         const gotDaily = await checkDailyLogin(address);
-        if (gotDaily) showToast('🌅 Daily login bonus: +5 TSWAP Points!');
+        if (gotDaily) showToast('Daily login bonus: +5 TSWAP Points!');
       }
     })();
   }, [isConnected, address, pendingRef]);
@@ -203,13 +208,13 @@ export default function Home() {
     if (!provider) { try { switchChain?.({ chainId: chainIdToConnect }); } catch {} return; }
     try {
       await provider.request({ method: 'wallet_addEthereumChain', params: [targetNetwork] });
-      showToast(`✅ Switched to ${targetNetwork.chainName}`);
+      showToast(`Switched to ${targetNetwork.chainName}`);
     } catch (addErr) {
       try {
         await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetNetwork.chainId }] });
-        showToast(`✅ Switched to ${targetNetwork.chainName}`);
+        showToast(`Switched to ${targetNetwork.chainName}`);
       } catch {
-        showToast(`❌ Could not switch. Please change network inside MetaMask manually.`);
+        showToast(`Could not switch. Please change network inside MetaMask manually.`);
       }
     }
   };
@@ -233,13 +238,13 @@ export default function Home() {
       <>
         <header>
           <div className="logo">
-            <div className="logo-icon">🔀</div>
+            <div className="logo-icon"><SwapIcon size={20} color="#fff"/></div>
             <div>TempoSwap</div>
           </div>
           <nav style={{ display: 'flex', gap: '4px', background: 'var(--bg-panel)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
             {TABS.map(tab => (
-              <button key={tab.id} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 600, fontSize: '13px', background: tab.id === 'swap' ? 'var(--brand-primary)' : 'transparent', color: tab.id === 'swap' ? 'white' : 'var(--text-dim)' }}>
-                {tab.label}
+              <button key={tab.id} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 600, fontSize: '13px', background: tab.id === 'swap' ? 'var(--brand-primary)' : 'transparent', color: tab.id === 'swap' ? 'white' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                {tab.icon} {tab.label}
               </button>
             ))}
           </nav>
@@ -283,7 +288,7 @@ export default function Home() {
           padding: '24px',
           backdropFilter: 'blur(8px)',
         }}>
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔴</div>
+          <div style={{ marginBottom: '16px' }}><AlertCircleIcon size={64} color="var(--danger)"/></div>
           <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Wrong Network</h2>
           <p style={{ color: 'var(--text-dim)', textAlign: 'center', marginBottom: '32px', fontSize: '15px', lineHeight: 1.6, maxWidth: '300px' }}>
             TempoSwap runs on <strong style={{ color: 'white' }}>Tempo Testnet</strong>.<br />
@@ -300,12 +305,12 @@ export default function Home() {
               letterSpacing: '0.3px',
             }}
           >
-            🔀 Switch to Tempo Testnet
+            <span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'}}><SwapIcon size={20}/> Switch to Tempo Testnet</span>
           </button>
           <button onClick={() => { setActiveTab('guide'); setDismissedNetworkAlert(true); }}
-            style={{ marginTop: '14px', background: 'none', border: 'none', color: '#818cf8', fontSize: '13px', cursor: 'pointer', padding: '8px', fontWeight: 600 }}
+            style={{ marginTop: '14px', background: 'none', border: 'none', color: '#818cf8', fontSize: '13px', cursor: 'pointer', padding: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}
           >
-            📚 How to add network manually
+            <BookIcon size={16}/> How to add network manually
           </button>
           <button
             onClick={() => disconnect()}
@@ -319,7 +324,7 @@ export default function Home() {
       {/* Header */}
       <header>
         <div className="logo">
-          <div className="logo-icon">🔀</div>
+          <div className="logo-icon"><SwapIcon size={20} color="#fff"/></div>
           <div>TempoSwap</div>
         </div>
 
@@ -327,8 +332,8 @@ export default function Home() {
           {TABS.filter(tab => !tab.adminOnly || address?.toLowerCase() === ADMIN_WALLET.toLowerCase()).map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               title={tab.desc}
-              style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px', transition: '0.15s', background: activeTab === tab.id ? 'var(--brand-primary)' : 'transparent', color: activeTab === tab.id ? 'white' : 'var(--text-dim)' }}>
-              {tab.label}
+              style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px', transition: '0.15s', background: activeTab === tab.id ? 'var(--brand-primary)' : 'transparent', color: activeTab === tab.id ? 'white' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              {tab.icon} {tab.label}
             </button>
           ))}
         </nav>
@@ -354,7 +359,7 @@ export default function Home() {
                 transition: 'all 0.2s',
               }}
             >
-              🚰 Get Tokens
+              <span style={{display:'flex',alignItems:'center',gap:'4px'}}><DropletIcon size={14}/> Get Tokens</span>
             </button>
           )}
 
@@ -425,7 +430,7 @@ export default function Home() {
                   background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-secondary))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '18px', boxShadow: '0 0 20px rgba(255,0,122,0.3)',
-                }}>🔀</div>
+                }}><SwapIcon size={18} color="#fff"/></div>
                 <span style={{ fontWeight: 900, fontSize: '20px', background: 'linear-gradient(135deg, #fff, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>TempoSwap</span>
               </div>
               <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.7, margin: '0 0 20px', maxWidth: '220px' }}>
@@ -434,10 +439,10 @@ export default function Home() {
               {/* Social Icons */}
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {[
-                  { icon: '𝕏', label: 'Twitter', href: 'https://x.com/bdggts' },
-                  { icon: '⌨', label: 'GitHub', href: 'https://github.com/bdggts' },
-                  { icon: '💬', label: 'Discord', href: 'https://discord.com' },
-                  { icon: '✈️', label: 'Telegram', href: 'https://t.me' },
+                  { icon: <TwitterIcon size={16}/>, label: 'Twitter', href: 'https://x.com/bdggts' },
+                  { icon: <GithubIcon size={16}/>, label: 'GitHub', href: 'https://github.com/bdggts' },
+                  { icon: <DiscordIcon size={16}/>, label: 'Discord', href: 'https://discord.com' },
+                  { icon: <TelegramIcon size={16}/>, label: 'Telegram', href: 'https://t.me' },
                 ].map(s => (
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                     title={s.label}
@@ -504,14 +509,14 @@ export default function Home() {
                 <div style={{ marginTop: '10px' }}>
                   <a href="https://explore.testnet.tempo.xyz" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '12px', color: 'var(--brand-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >🔍 Explorer ↗</a>
+                  ><span style={{display:'flex',alignItems:'center',gap:'4px'}}><SearchIcon size={12}/> Explorer <ExternalLinkIcon size={10}/></span></a>
                 </div>
                 <div style={{ marginTop: '6px' }}>
                   <a href="https://tempo.xyz" target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '12px', color: 'var(--text-dim)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
                     onMouseEnter={e => e.target.style.color = '#fff'}
                     onMouseLeave={e => e.target.style.color = 'var(--text-dim)'}
-                  >🌐 Tempo Network ↗</a>
+                  ><span style={{display:'flex',alignItems:'center',gap:'4px'}}><GlobeIcon size={12}/> Tempo Network <ExternalLinkIcon size={10}/></span></a>
                 </div>
               </div>
             </div>
@@ -551,10 +556,10 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               {[
-                { label: '📖 Price-Time Priority Orderbook' },
-                { label: '🧪 Testnet — Not Financial Advice' },
+                { label: 'Price-Time Priority Orderbook', icon: <OrdersIcon size={11}/> },
+                { label: 'Testnet — Not Financial Advice', icon: <AlertCircleIcon size={11}/> },
               ].map(item => (
-                <span key={item.label} style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.label}</span>
+                <span key={item.label} style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>{item.icon} {item.label}</span>
               ))}
             </div>
           </div>

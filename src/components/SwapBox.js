@@ -4,6 +4,7 @@ import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTr
 import { parseUnits, formatUnits } from 'viem';
 import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, ADMIN_WALLET, getTokensForChain } from '@/config/web3';
 import { awardPoints, checkReferralUnlock } from '@/lib/points';
+import { SearchIcon, SettingsIcon, ZapIcon, XCircleIcon, CheckCircleIcon, ExternalLinkIcon, WarningIcon, ActivityIcon } from '@/components/Icons';
 
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
 
@@ -272,7 +273,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
         args: [baseToken.address, orderAmount, isBid, marketTick],
       });
     } else {
-      setTxError('⚠️ No liquidity available for this pair right now.');
+      setTxError('No liquidity available for this pair right now.');
       setTimeout(() => setTxError(''), 6000);
     }
 
@@ -311,7 +312,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     return (
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
         <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+          <div style={{ marginBottom: '16px' }}><SearchIcon size={48} color="var(--text-dim)"/></div>
           <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>No Tokens on {currentNetworkId === 4217 ? 'Mainnet' : 'Testnet'}</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '340px', margin: '0 auto' }}>
             {currentNetworkId === 4217
@@ -334,7 +335,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
             <button className="active">Swap</button>
           </div>
           <button onClick={() => setShowSettings(!showSettings)}
-            style={{ background: 'none', border: 'none', color: showSettings ? 'var(--brand-primary)' : 'var(--text-dim)', fontSize: '18px', cursor: 'pointer' }}>⚙️</button>
+            style={{ background: 'none', border: 'none', color: showSettings ? 'var(--brand-primary)' : 'var(--text-dim)', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><SettingsIcon size={18}/></button>
         </div>
 
         {showSettings && (
@@ -408,7 +409,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
 
           {amountIn && !hasLiquidity && (
             <div style={{ padding: '10px 12px', marginTop: '4px', background: 'rgba(255,171,0,0.1)', border: '1px solid rgba(255,171,0,0.25)', borderRadius: '10px', fontSize: '12px', color: 'var(--warning)', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '14px' }}>⚡</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}><ZapIcon size={14} color="var(--warning)"/></span>
               <span><strong>Smart Swap Active:</strong> No direct liquidity found. Your swap will auto-place a <strong>Market Order at best price</strong> — it fills the moment a matching trade appears!</span>
             </div>
           )}
@@ -446,7 +447,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
                 : !amountIn
                 ? 'Enter an amount'
                 : swapMode === 'market-order'
-                ? `⚡ Smart Swap: Place Market Order`
+                ? 'Smart Swap: Place Market Order'
                 : `Swap ${tokenIn?.symbol} → ${tokenOut?.symbol}`
               }
             </button>
@@ -454,20 +455,20 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
 
           {txError && (
             <div style={{ marginTop: '12px', padding: '12px', borderRadius: '12px', background: 'rgba(255,71,87,0.1)', border: '1px solid var(--danger)', fontSize: '13px', textAlign: 'center', color: 'var(--danger)' }}>
-              ❌ {txError}
+              <span style={{display:'flex',alignItems:'center',gap:'6px',justifyContent:'center'}}><XCircleIcon size={14}/> {txError}</span>
             </div>
           )}
           {txHash && (
             <div style={{ marginTop: '12px', padding: '12px', borderRadius: '12px', background: isSuccess ? 'rgba(39,174,96,0.1)' : 'var(--bg-card)', border: `1px solid ${isSuccess ? 'var(--success)' : 'var(--border-light)'}`, fontSize: '14px', textAlign: 'center' }}>
               {!isSuccess && (
                 <div>
-                  <div style={{ marginBottom: '4px' }}>📡 Transaction Sent!</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>⏳ Executing on Tempo orderbook...</div>
+                  <div style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}><ActivityIcon size={14}/> Transaction Sent!</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Executing on Tempo orderbook...</div>
                 </div>
               )}
               {isSuccess && (
                 <div style={{ color: 'var(--success)', fontWeight: 600 }}>
-                  ✅ Swap Confirmed! <a href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-primary)', textDecoration: 'none', marginLeft: '8px' }}>View ↗</a>
+                  <span style={{display:'flex',alignItems:'center',gap:'6px',justifyContent:'center'}}><CheckCircleIcon size={14}/> Swap Confirmed! <a href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-primary)', textDecoration: 'none', marginLeft: '4px', display: 'flex', alignItems: 'center', gap: '3px' }}>View <ExternalLinkIcon size={11}/></a></span>
                 </div>
               )}
             </div>

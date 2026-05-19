@@ -5,6 +5,7 @@ import {
   ensureUser, getUserData, getHistory, getLeaderboard,
   getReferralCount, walletToRefCode, POINT_ACTIONS
 } from '@/lib/points';
+import { TrophyIcon, LinkIcon, TwitterIcon, CopyIcon, CheckIcon, CheckCircleIcon, XCircleIcon } from '@/components/Icons';
 
 const SITE_URL = 'https://tempo-dex.vercel.app';
 
@@ -54,12 +55,12 @@ export default function Points({ onConnect, pendingRef }) {
 
     if (twitterStatus === 'success') {
       const username = params.get('username') || '';
-      setTwitterMsg(`✅ Twitter connected! ${username} — +30 pts earned!`);
+      setTwitterMsg(`Twitter connected! ${username} — +30 pts earned!`);
       load();
     } else if (twitterStatus === 'duplicate') {
-      setTwitterMsg('❌ This Twitter account is already linked to another wallet.');
+      setTwitterMsg('This Twitter account is already linked to another wallet.');
     } else if (twitterStatus === 'error') {
-      setTwitterMsg('❌ Twitter connection failed. Try again.');
+      setTwitterMsg('Twitter connection failed. Try again.');
     }
 
     // Clean URL
@@ -82,12 +83,12 @@ export default function Points({ onConnect, pendingRef }) {
 
   const myRank = leaderboard.findIndex(u => u.wallet === address?.toLowerCase()) + 1;
 
-  const RANK_EMOJI = ['🥇','🥈','🥉'];
+  const RANK_COLORS = ['#FFD700','#C0C0C0','#CD7F32'];
 
   if (!isConnected) {
     return (
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', textAlign: 'center', padding: '48px 24px' }}>
-        <div style={{ fontSize: '56px', marginBottom: '16px' }}>🏆</div>
+        <div style={{ marginBottom: '16px' }}><TrophyIcon size={56} color="var(--brand-primary)"/></div>
         <h2 style={{ fontSize: '22px', marginBottom: '8px' }}>TSWAP Points</h2>
         <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '300px', margin: '0 auto 24px' }}>
           Earn points for every action. Points convert to <strong style={{ color: 'var(--brand-primary)' }}>TempoSwap tokens</strong> at TGE.
@@ -149,7 +150,7 @@ export default function Points({ onConnect, pendingRef }) {
       {/* Referral */}
       <div className="swap-container" style={{ padding: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>🔗 Referral</div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '6px' }}><LinkIcon size={14}/> Referral</div>
           <div style={{ fontSize: '13px', color: 'var(--brand-primary)', fontWeight: 700 }}>{referralCount} referred · +{referralCount * 50} pts</div>
         </div>
         <div style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '10px' }}>
@@ -171,25 +172,25 @@ export default function Points({ onConnect, pendingRef }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              𝕏 Connect Twitter
-              {userData?.twitter_followed && <span style={{ fontSize: '11px', background: 'rgba(29,161,242,0.15)', color: '#1da1f2', padding: '2px 8px', borderRadius: '20px', fontWeight: 600 }}>✓ Verified</span>}
+              <span style={{display:'flex',alignItems:'center',gap:'6px'}}><TwitterIcon size={14}/> Connect Twitter</span>
+              {userData?.twitter_followed && <span style={{ fontSize: '11px', background: 'rgba(29,161,242,0.15)', color: '#1da1f2', padding: '2px 8px', borderRadius: '20px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}><CheckIcon size={10}/> Verified</span>}
             </div>
             {userData?.twitter_username
               ? <div style={{ fontSize: '13px', color: '#1da1f2', fontWeight: 600 }}>@{userData.twitter_username}</div>
               : <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Connect your Twitter/X account to earn <strong style={{ color: '#f59e0b' }}>+30 pts</strong> &amp; unlock referral rewards</div>
             }
-            {twitterMsg && <div style={{ fontSize: '12px', marginTop: '6px', color: twitterMsg.startsWith('✅') ? 'var(--success)' : 'var(--danger)' }}>{twitterMsg}</div>}
+            {twitterMsg && <div style={{ fontSize: '12px', marginTop: '6px', color: twitterMsg.includes('connected') ? 'var(--success)' : 'var(--danger)' }}>{twitterMsg}</div>}
           </div>
           {userData?.twitter_followed
             ? <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'rgba(29,161,242,0.1)', border: '1px solid rgba(29,161,242,0.3)', color: '#1da1f2', fontWeight: 700, fontSize: '13px' }}>
-                ✓ Connected
+                <span style={{display:'flex',alignItems:'center',gap:'4px'}}><CheckIcon size={12}/> Connected</span>
               </div>
             : <button onClick={handleTwitterConnect}
                 style={{ background: '#000', color: '#fff', border: '1px solid #333', borderRadius: '10px', padding: '10px 18px', fontWeight: 700, cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
                 onMouseLeave={e => e.currentTarget.style.background = '#000'}
               >
-                𝕏 Connect Twitter
+                <span style={{display:'flex',alignItems:'center',gap:'6px'}}><TwitterIcon size={14}/> Connect Twitter</span>
               </button>
           }
         </div>
@@ -197,14 +198,14 @@ export default function Points({ onConnect, pendingRef }) {
 
       {/* Leaderboard */}
       <div className="swap-container" style={{ padding: '16px' }}>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>🏆 Leaderboard</div>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}><TrophyIcon size={14}/> Leaderboard</div>
         {leaderboard.length === 0
           ? <div style={{ color: 'var(--text-dim)', fontSize: '13px', textAlign: 'center', padding: '16px' }}>Be the first! Connect & start earning.</div>
           : leaderboard.map((u, i) => {
             const isMe = u.wallet === address?.toLowerCase();
             return (
               <div key={u.wallet} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: i < leaderboard.length - 1 ? '1px solid var(--border-light)' : 'none', background: isMe ? 'rgba(255,0,122,0.05)' : 'transparent', borderRadius: isMe ? '8px' : '0', paddingLeft: isMe ? '8px' : '0' }}>
-                <div style={{ width: '28px', textAlign: 'center', fontSize: '18px' }}>{RANK_EMOJI[i] || `#${i + 1}`}</div>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, background: i < 3 ? `${RANK_COLORS[i]}20` : 'var(--bg-card)', color: i < 3 ? RANK_COLORS[i] : 'var(--text-dim)', border: i < 3 ? `1px solid ${RANK_COLORS[i]}40` : '1px solid var(--border-light)' }}>{i + 1}</div>
                 <div style={{ flex: 1, fontFamily: 'monospace', fontSize: '13px', color: isMe ? 'var(--brand-primary)' : 'var(--text-main)', fontWeight: isMe ? 700 : 400 }}>{shortAddr(u.wallet)}{isMe ? ' (you)' : ''}</div>
                 <div style={{ fontWeight: 800, fontSize: '14px', color: '#fff' }}>{u.points?.toLocaleString()} <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontWeight: 400 }}>pts</span></div>
               </div>

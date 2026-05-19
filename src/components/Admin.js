@@ -2,6 +2,7 @@
 import { useReadContracts } from 'wagmi';
 import { formatUnits } from 'viem';
 import { TOKENS, ADMIN_WALLET, ERC20_ABI, PLATFORM_FEE_BPS } from '@/config/web3';
+import { LockIcon, ShieldIcon, EarnIcon, ZapIcon, BarChartIcon, KeyIcon, CheckCircleIcon, WarningIcon } from '@/components/Icons';
 
 const TOKEN_LIST = Object.values(TOKENS);
 
@@ -46,7 +47,7 @@ export default function Admin({ isConnected, address }) {
   if (!isConnected) {
     return (
       <div className="swap-container" style={{ textAlign: 'center', padding: '48px 24px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔐</div>
+        <div style={{ marginBottom: '16px' }}><LockIcon size={48} color="var(--text-dim)"/></div>
         <h3 style={{ marginBottom: '8px' }}>Admin Only</h3>
         <p style={{ color: 'var(--text-dim)', fontSize: '14px' }}>
           Connect your admin wallet to view the dashboard.
@@ -58,7 +59,7 @@ export default function Admin({ isConnected, address }) {
   if (!isAdmin) {
     return (
       <div className="swap-container" style={{ textAlign: 'center', padding: '48px 24px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚫</div>
+        <div style={{ marginBottom: '16px' }}><ShieldIcon size={48} color="var(--danger)"/></div>
         <h3 style={{ marginBottom: '8px' }}>Access Denied</h3>
         <p style={{ color: 'var(--text-dim)', fontSize: '14px' }}>
           This page is only accessible to the admin wallet.
@@ -89,21 +90,21 @@ export default function Admin({ isConnected, address }) {
           Total collected across all fee streams
         </div>
         <div style={{ display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap' }}>
-          <span style={{ background: 'rgba(124,58,237,0.2)', color: '#a78bfa', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: 700 }}>
-            ⚡ Swap: {PLATFORM_FEE_BPS / 100}%
+            <span style={{ background: 'rgba(124,58,237,0.2)', color: '#a78bfa', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <ZapIcon size={11}/> Swap: {PLATFORM_FEE_BPS / 100}%
           </span>
-          <span style={{ background: 'rgba(255,0,122,0.15)', color: '#fb7185', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: 700 }}>
-            🌾 Yield Claim: 1%
+            <span style={{ background: 'rgba(255,0,122,0.15)', color: '#fb7185', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <EarnIcon size={11}/> Yield Claim: 1%
           </span>
-          <span style={{ background: 'rgba(6,182,212,0.15)', color: '#67e8f9', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: 700 }}>
-            💳 Withdrawal: 0.5%
+            <span style={{ background: 'rgba(6,182,212,0.15)', color: '#67e8f9', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <WalletIcon size={11}/> Withdrawal: 0.5%
           </span>
         </div>
       </div>
 
       {/* Token Balances */}
       <div className="swap-container" style={{ padding: '20px' }}>
-        <div style={{ fontWeight: 700, marginBottom: '16px', fontSize: '15px' }}>💰 Token Balances (Admin Wallet)</div>
+        <div style={{ fontWeight: 700, marginBottom: '16px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><EarnIcon size={16}/> Token Balances (Admin Wallet)</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {tokenBalances.map(t => (
             <div key={t.symbol} style={{
@@ -133,19 +134,19 @@ export default function Admin({ isConnected, address }) {
 
       {/* Fee Structure Info */}
       <div className="swap-container" style={{ padding: '20px' }}>
-        <div style={{ fontWeight: 700, marginBottom: '16px', fontSize: '15px' }}>📊 Fee Structure</div>
+        <div style={{ fontWeight: 700, marginBottom: '16px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><BarChartIcon size={16}/> Fee Structure</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {[
-            { icon: '⚡', label: 'Swap Fee', rate: '0.1%', desc: 'On every token swap — auto-transferred to admin' },
-            { icon: '🌾', label: 'Yield Claim Fee', rate: '1%', desc: '1% of yield when user claims — auto-transferred' },
-            { icon: '💳', label: 'Withdrawal Fee', rate: '0.5%', desc: '0.5% of withdrawn amount — auto-transferred' },
+            { icon: <ZapIcon size={18}/>, label: 'Swap Fee', rate: '0.1%', desc: 'On every token swap — auto-transferred to admin' },
+            { icon: <EarnIcon size={18}/>, label: 'Yield Claim Fee', rate: '1%', desc: '1% of yield when user claims — auto-transferred' },
+            { icon: <WalletIcon size={18}/>, label: 'Withdrawal Fee', rate: '0.5%', desc: '0.5% of withdrawn amount — auto-transferred' },
           ].map(item => (
             <div key={item.label} style={{
               display: 'flex', alignItems: 'center', gap: '12px',
               padding: '12px 16px', borderRadius: '12px',
               background: 'var(--bg-input)', border: '1px solid var(--border)',
             }}>
-              <span style={{ fontSize: '20px' }}>{item.icon}</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: '14px' }}>{item.label}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>{item.desc}</div>
@@ -158,7 +159,7 @@ export default function Admin({ isConnected, address }) {
 
       {/* Admin Wallet Info */}
       <div className="swap-container" style={{ padding: '20px' }}>
-        <div style={{ fontWeight: 700, marginBottom: '12px', fontSize: '15px' }}>🔑 Admin Wallet</div>
+        <div style={{ fontWeight: 700, marginBottom: '12px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><KeyIcon size={16}/> Admin Wallet</div>
         <div style={{
           fontFamily: 'monospace', fontSize: '13px', color: '#a78bfa',
           background: 'rgba(124,58,237,0.1)', padding: '12px 16px',
@@ -168,7 +169,7 @@ export default function Admin({ isConnected, address }) {
           {ADMIN_WALLET}
         </div>
         <div style={{ fontSize: '12px', color: 'var(--text-dim)', marginTop: '8px' }}>
-          ✅ Connected as admin · All fees auto-route here
+          <span style={{display:'flex',alignItems:'center',gap:'4px'}}><CheckCircleIcon size={12}/> Connected as admin · All fees auto-route here</span>
         </div>
       </div>
 

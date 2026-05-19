@@ -6,13 +6,14 @@ import {
   TOKENS, ADMIN_WALLET, ERC20_ABI, REGISTRY_ADDRESS, REGISTRY_ABI,
   LOCK_PERIOD, APY_BY_LOCK, LOCK_DAYS, weeklyRate, estimateYield, getTokensForChain,
 } from '@/config/web3';
+import { UnlockIcon, TrophyIcon, LockIcon, EarnIcon, CheckCircleIcon, XCircleIcon, WarningIcon, BarChartIcon, InfoIcon, ZapIcon, CoinsIcon } from '@/components/Icons';
 
 // ─── Lock Tier Config ─────────────────────────────────────────────────────────
 const LOCK_TIERS = [
   {
     id: LOCK_PERIOD.FLEXIBLE,
     label: 'Flexible',
-    icon: '🔓',
+    icon: 'unlock',
     days: 'Anytime',
     lockDays: 0,
     period: '—',
@@ -24,7 +25,7 @@ const LOCK_TIERS = [
   {
     id: LOCK_PERIOD.Q1,
     label: '1st Quarter',
-    icon: '🏆',
+    icon: 'trophy',
     days: '3 months',
     lockDays: 90,
     period: 'Q1',
@@ -36,7 +37,7 @@ const LOCK_TIERS = [
   {
     id: LOCK_PERIOD.Q2,
     label: '2nd Quarter',
-    icon: '🏆',
+    icon: 'trophy',
     days: '6 months',
     lockDays: 180,
     period: 'Q2',
@@ -48,7 +49,7 @@ const LOCK_TIERS = [
   {
     id: LOCK_PERIOD.Q3,
     label: '3rd Quarter',
-    icon: '🏆',
+    icon: 'trophy',
     days: '9 months',
     lockDays: 270,
     period: 'Q3',
@@ -60,7 +61,7 @@ const LOCK_TIERS = [
   {
     id: LOCK_PERIOD.Q4,
     label: '4th Quarter',
-    icon: '🏆',
+    icon: 'trophy',
     days: '12 months',
     lockDays: 365,
     period: 'Q4',
@@ -79,7 +80,7 @@ function Countdown({ unlockTime }) {
     const calc = () => {
       const now = Math.floor(Date.now() / 1000);
       const diff = Number(unlockTime) - now;
-      if (diff <= 0) { setRemaining('Unlocked ✅'); return; }
+      if (diff <= 0) { setRemaining('Unlocked'); return; }
       const d = Math.floor(diff / 86400);
       const h = Math.floor((diff % 86400) / 3600);
       const m = Math.floor((diff % 3600) / 60);
@@ -183,7 +184,7 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw, onCla
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '22px' }}>{tier.icon}</span>
+          <span style={{ display: 'flex', alignItems: 'center' }}>{tier.icon === 'unlock' ? <UnlockIcon size={22} color={tier.color}/> : <TrophyIcon size={22} color={tier.color}/>}</span>
           <div>
             <div style={{ fontWeight: 700, fontSize: '15px' }}>{token?.symbol || 'Token'}</div>
             <div style={{ fontSize: '12px', color: tier.color, fontWeight: 600 }}>{tier.label} · {tier.apy}% APY</div>
@@ -198,7 +199,7 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw, onCla
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
         <div style={{ background: 'var(--bg-panel)', borderRadius: '10px', padding: '10px 12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '3px' }}>Earned Yield 🔄</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '3px' }}>Earned Yield</div>
           <div style={{ fontWeight: 700, color: '#34d399', fontSize: '14px' }}>
             +{totalYieldFloat.toFixed(6)} {token?.symbol}
           </div>
@@ -211,7 +212,7 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw, onCla
             {dep.lockPeriod === 0 ? 'Flexible' : unlocked ? 'Status' : 'Unlocks in'}
           </div>
           <div style={{ fontWeight: 700, fontSize: '13px', color: unlocked ? '#34d399' : tier.color }}>
-            {dep.lockPeriod === 0 ? '🔓 Anytime' : unlocked ? '✅ Ready' : <Countdown unlockTime={dep.unlockTime} />}
+            {dep.lockPeriod === 0 ? 'Anytime' : unlocked ? 'Ready' : <Countdown unlockTime={dep.unlockTime} />}
           </div>
         </div>
       </div>
@@ -235,10 +236,11 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw, onCla
           }}
         >
           {isClaiming
-            ? '⏳ Claiming — Confirm in MetaMask...'
+            ? 'Claiming — Confirm in MetaMask...'
             : justClaimed
-            ? '✅ Yield Claimed!'
-            : `🌾 Claim Yield: +${totalYieldFloat.toFixed(6)} ${token?.symbol}`}
+            ? 'Yield Claimed!'
+
+            : `Claim Yield: +${totalYieldFloat.toFixed(6)} ${token?.symbol}`}
         </button>
       )}
 
@@ -295,12 +297,12 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw, onCla
             }}
           >
             {isWithdrawing
-              ? '⏳ Withdrawing — Confirm in MetaMask...'
+              ? 'Withdrawing — Confirm in MetaMask...'
               : (!withdrawAmt || parseFloat(withdrawAmt) <= 0)
               ? 'Enter Amount to Withdraw'
               : parseFloat(withdrawAmt) >= principalFloat
-              ? `✅ Withdraw All ${principalFloat.toLocaleString()} ${token?.symbol}`
-              : `↑ Withdraw ${parseFloat(withdrawAmt).toLocaleString()} ${token?.symbol}`
+              ? `Withdraw All ${principalFloat.toLocaleString()} ${token?.symbol}`
+              : `Withdraw ${parseFloat(withdrawAmt).toLocaleString()} ${token?.symbol}`
             }
           </button>
         </div>
@@ -312,7 +314,7 @@ function PositionCard({ dep, index, address, currentNetworkId, onWithdraw, onCla
           width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)',
           background: 'transparent', color: 'var(--text-dim)', fontWeight: 700, fontSize: '13px', cursor: 'not-allowed', opacity: 0.5,
         }}>
-          🔒 Locked until {new Date(Number(dep.unlockTime) * 1000).toLocaleDateString()}
+          Locked until {new Date(Number(dep.unlockTime) * 1000).toLocaleDateString()}
         </button>
       )}
     </div>
@@ -341,7 +343,7 @@ function TierCard({ tier, selected, onSelect }) {
           BEST
         </div>
       )}
-      <div style={{ fontSize: '18px', marginBottom: '3px' }}>{tier.icon}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3px' }}>{tier.icon === 'unlock' ? <UnlockIcon size={18} color={isSelected ? tier.color : 'var(--text-dim)'}/> : <TrophyIcon size={18} color={isSelected ? tier.color : 'var(--text-dim)'}/>}</div>
       <div style={{ fontWeight: 700, fontSize: '12px', color: isSelected ? tier.color : 'var(--text-main)' }}>{tier.label}</div>
       <div style={{ fontSize: '15px', fontWeight: 800, color: tier.color, marginTop: '2px' }}>{tier.apy}%</div>
       <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>annual</div>
@@ -438,7 +440,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
       // Step 1: Approve if needed
       if (!isAlreadyApproved) {
         setStep('approving');
-        setStatusMsg('⏳ Step 1: Approve tokens — confirm in MetaMask...');
+        setStatusMsg('Step 1: Approve tokens — confirm in MetaMask...');
         await writeContractAsync({
           address: selectedToken.address,
           abi: ERC20_ABI,
@@ -448,12 +450,12 @@ export default function Earn({ currentNetworkId, onConnect }) {
           gas: 2_000_000n,
         });
         // No need to wait for approve mining — deposit uses explicit gas (no estimation needed)
-        setStatusMsg('✅ Approved! Now registering deposit...');
+        setStatusMsg('Approved! Now registering deposit...');
       }
 
       // Step 2: Register deposit on-chain (with explicit gas to avoid estimation issues)
       setStep('registering');
-      setStatusMsg('⏳ Registering deposit — confirm in MetaMask...');
+      setStatusMsg('Registering deposit — confirm in MetaMask...');
       await writeContractAsync({
         address: registryAddr,
         abi: REGISTRY_ABI,
@@ -465,14 +467,14 @@ export default function Earn({ currentNetworkId, onConnect }) {
 
       // Done!
       setStep('done');
-      setStatusMsg('🎉 Deposit registered on-chain! Funds are working for you.');
+      setStatusMsg('Deposit registered on-chain! Funds are working for you.');
       setAmount('');
       refetchDeposits();
       refetchAllowance();
     } catch (err) {
       console.error('Deposit error:', err);
       setStep('error');
-      setStatusMsg(`❌ ${err.shortMessage || err.message || 'Transaction failed. Please try again.'}`);
+      setStatusMsg(`${err.shortMessage || err.message || 'Transaction failed. Please try again.'}`);
       setTimeout(() => { setStep('idle'); setStatusMsg(''); }, 5000);
     }
   };
@@ -510,12 +512,12 @@ export default function Earn({ currentNetworkId, onConnect }) {
               gas: 100_000n,
             });
             const feeFormatted = parseFloat(formatUnits(feeBig, tokenDecimals)).toFixed(4);
-            setWithdrawMsg(`✅ Withdrawn! 0.5% platform fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
+            setWithdrawMsg(`Withdrawn! 0.5% platform fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
           } else {
-            setWithdrawMsg('✅ Withdrawn! Principal + yield sent to your wallet.');
+            setWithdrawMsg('Withdrawn! Principal + yield sent to your wallet.');
           }
         } catch {
-          setWithdrawMsg('✅ Withdrawn! Principal + yield sent to your wallet.');
+          setWithdrawMsg('Withdrawn! Principal + yield sent to your wallet.');
         }
       } else {
         // Partial withdraw — returns specified amount only
@@ -542,21 +544,21 @@ export default function Earn({ currentNetworkId, onConnect }) {
               gas: 100_000n,
             });
             const feeFormatted = parseFloat(formatUnits(feeBig, tokenDecimals)).toFixed(4);
-            setWithdrawMsg(`✅ Withdrawn! 0.5% fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
+            setWithdrawMsg(`Withdrawn! 0.5% fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
           } else {
-            setWithdrawMsg(`✅ Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
+            setWithdrawMsg(`Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
           }
         } catch {
-          setWithdrawMsg(`✅ Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
+          setWithdrawMsg(`Withdrawn ${parseFloat(amountStr).toLocaleString()} tokens to your wallet!`);
         }
       }
       setTimeout(() => { refetchDeposits(); setWithdrawMsg(''); }, 6000);
     } catch (err) {
       const msg = err.shortMessage || err.message || '';
-      const friendly = msg.includes('wait 1 hour') ? '⏳ Please wait 1 hour between withdrawals (rate limit).'
-        : msg.includes('daily') ? '⏳ Daily withdrawal limit reached. Try again tomorrow.'
-        : msg.includes('paused') ? '🔴 Contract is paused. Contact admin.'
-        : `❌ ${msg || 'Withdrawal failed. Try again.'}`;
+      const friendly = msg.includes('wait 1 hour') ? 'Please wait 1 hour between withdrawals (rate limit).'
+        : msg.includes('daily') ? 'Daily withdrawal limit reached. Try again tomorrow.'
+        : msg.includes('paused') ? 'Contract is paused. Contact admin.'
+        : `${msg || 'Withdrawal failed. Try again.'}`;
       setWithdrawMsg(friendly);
       setTimeout(() => setWithdrawMsg(''), 6000);
       throw err;
@@ -598,16 +600,16 @@ export default function Earn({ currentNetworkId, onConnect }) {
               gas: 100_000n,
             });
             const feeFormatted = parseFloat(formatUnits(feeBig, decimals)).toFixed(4);
-            setWithdrawMsg(`🌾 Yield claimed! 1% platform fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
+            setWithdrawMsg(`Yield claimed! 1% platform fee (${feeFormatted} ${token?.symbol || ''}) applied.`);
           } else {
-            setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+            setWithdrawMsg('Yield claimed! Tokens sent to your wallet.');
           }
         } else {
-          setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+          setWithdrawMsg('Yield claimed! Tokens sent to your wallet.');
         }
       } catch {
         // Fee transfer failed (e.g. insufficient balance) — still show success for main claim
-        setWithdrawMsg('🌾 Yield claimed! Tokens sent to your wallet.');
+        setWithdrawMsg('Yield claimed! Tokens sent to your wallet.');
       }
 
       // Refetch IMMEDIATELY so yield resets to 0 — prevents double-claim
@@ -615,7 +617,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
       setTimeout(() => { refetchDeposits(); setWithdrawMsg(''); }, 3000);
     } catch (err) {
       const msg = err.shortMessage || err.message || '';
-      setWithdrawMsg(msg.includes('no yield') ? '⚠️ No yield to claim yet.' : `❌ ${msg || 'Claim failed. Try again.'}`);
+      setWithdrawMsg(msg.includes('no yield') ? 'No yield to claim yet.' : `${msg || 'Claim failed. Try again.'}`);
       setTimeout(() => setWithdrawMsg(''), 5000);
       throw err;
     }
@@ -653,7 +655,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
     return (
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
         <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '56px', marginBottom: '16px' }}>💰</div>
+          <div style={{ marginBottom: '16px' }}><EarnIcon size={56} color="var(--brand-primary)"/></div>
           <h3 style={{ marginBottom: '8px', fontSize: '20px' }}>Liquidity Pool Earning</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '320px', margin: '0 auto 28px' }}>
             Deposit your tokens, choose a lock period, and earn up to <strong style={{ color: '#34d399' }}>15% APY</strong> while providing swap liquidity.
@@ -671,10 +673,10 @@ export default function Earn({ currentNetworkId, onConnect }) {
       <div className="swap-container" style={{ padding: '0' }}>
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 700 }}>💰 Liquidity Pool</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}><EarnIcon size={20}/> Liquidity Pool</h2>
             {!isRegistryDeployed && (
               <span style={{ fontSize: '11px', background: 'rgba(255,193,7,0.15)', color: '#fbbf24', padding: '3px 10px', borderRadius: '8px', border: '1px solid #fbbf2430', fontWeight: 700 }}>
-                ⚠️ Contract Not Deployed
+                Contract Not Deployed
               </span>
             )}
           </div>
@@ -775,7 +777,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
                 <span style={{ fontWeight: 700, color: '#34d399' }}>+{estYield.toFixed(4)} {selectedToken?.symbol}</span>
               </div>
               <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px dashed var(--border-light)', paddingTop: '8px' }}>
-                💡 Fixed Deposit style: Longer lock period = higher annual return. Max 15%/year on the 12-month (Q4) plan.
+                Fixed Deposit style: Longer lock period = higher annual return. Max 15%/year on the 12-month (Q4) plan.
               </div>
             </div>
           );
@@ -808,7 +810,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
         {/* Deposit Button */}
         {!isRegistryDeployed ? (
           <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(255,193,7,0.08)', border: '1px solid #fbbf2440', fontSize: '13px', color: '#fbbf24', textAlign: 'center', lineHeight: 1.6 }}>
-            ⚠️ Deploy the <strong>DepositRegistry</strong> contract first<br/>
+            Deploy the <strong>DepositRegistry</strong> contract first<br/>
             <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>See <code>contracts/deploy-registry.js</code> for instructions</span>
           </div>
         ) : (
@@ -836,12 +838,12 @@ export default function Earn({ currentNetworkId, onConnect }) {
               letterSpacing: step === 'done' ? '0.5px' : '0',
             }}
           >
-            {step === 'approving' ? '⏳ Approving — Confirm in MetaMask...' :
-             step === 'registering' ? '⏳ Registering — Confirm in MetaMask...' :
-             step === 'done' ? '🎉 Successfully Deposited! — Tap to deposit more' :
+            {step === 'approving' ? 'Approving — Confirm in MetaMask...' :
+             step === 'registering' ? 'Registering — Confirm in MetaMask...' :
+             step === 'done' ? 'Successfully Deposited! — Tap to deposit more' :
              isAlreadyApproved
-             ? `⚡ Instant Deposit — ${(LOCK_TIERS.find(t => t.id === selectedTier) || LOCK_TIERS[0]).label}`
-             : `${(LOCK_TIERS.find(t => t.id === selectedTier) || LOCK_TIERS[0]).icon} Deposit & Lock ${(LOCK_TIERS.find(t => t.id === selectedTier) || LOCK_TIERS[0]).label}`}
+             ? `Instant Deposit — ${(LOCK_TIERS.find(t => t.id === selectedTier) || LOCK_TIERS[0]).label}`
+             : `Deposit & Lock ${(LOCK_TIERS.find(t => t.id === selectedTier) || LOCK_TIERS[0]).label}`}
           </button>
         )}
       </div>
@@ -849,7 +851,7 @@ export default function Earn({ currentNetworkId, onConnect }) {
       {/* ── My Positions ── */}
       {activeDeposits.length > 0 && (
         <div className="swap-container" style={{ padding: '20px 24px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px' }}>📊 My Positions ({activeDeposits.length})</h3>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}><BarChartIcon size={16}/> My Positions ({activeDeposits.length})</h3>
 
           {/* Withdraw result message */}
           {withdrawMsg && (
@@ -860,9 +862,9 @@ export default function Earn({ currentNetworkId, onConnect }) {
               fontSize: '13px',
               fontWeight: 600,
               textAlign: 'center',
-              background: withdrawMsg.startsWith('✅') ? 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(52,211,153,0.08))' : 'rgba(255,71,87,0.08)',
-              border: `1px solid ${withdrawMsg.startsWith('✅') ? '#10b981' : 'var(--danger)'}`,
-              color: withdrawMsg.startsWith('✅') ? '#10b981' : 'var(--danger)',
+              background: withdrawMsg.includes('Withdrawn') || withdrawMsg.includes('claimed') ? 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(52,211,153,0.08))' : 'rgba(255,71,87,0.08)',
+              border: `1px solid ${withdrawMsg.includes('Withdrawn') || withdrawMsg.includes('claimed') ? '#10b981' : 'var(--danger)'}`,
+              color: withdrawMsg.includes('Withdrawn') || withdrawMsg.includes('claimed') ? '#10b981' : 'var(--danger)',
             }}>
               {withdrawMsg}
             </div>
@@ -886,14 +888,14 @@ export default function Earn({ currentNetworkId, onConnect }) {
 
       {/* ── How It Works ── */}
       <div className="swap-container" style={{ padding: '20px 24px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '14px', color: 'var(--text-dim)' }}>ℹ️ How It Works</h3>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '14px', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '6px' }}><InfoIcon size={14}/> How It Works</h3>
         {[
-          { step: '1', text: 'Deposit any stablecoin and choose your lock period', icon: '💰' },
-          { step: '2', text: 'Your funds power the market maker bot — providing swap liquidity and earning spread profits', icon: '🤖' },
-          { step: '3', text: 'Bot shares 70% of trading profits as yield. Withdraw after lock expires — principal + yield returned to your wallet', icon: '💸' },
+          { step: '1', text: 'Deposit any stablecoin and choose your lock period', icon: <EarnIcon size={16}/> },
+          { step: '2', text: 'Your funds power the market maker bot — providing swap liquidity and earning spread profits', icon: <ZapIcon size={16}/> },
+          { step: '3', text: 'Bot shares 70% of trading profits as yield. Withdraw after lock expires — principal + yield returned to your wallet', icon: <CoinsIcon size={16}/> },
         ].map(s => (
           <div key={s.step} style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'flex-start' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>{s.icon}</div>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{s.icon}</div>
             <div style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6, paddingTop: '6px' }}>{s.text}</div>
           </div>
         ))}

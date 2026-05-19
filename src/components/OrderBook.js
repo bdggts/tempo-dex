@@ -4,6 +4,7 @@ import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTr
 import { parseUnits, formatUnits } from 'viem';
 import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, TICK_SPACING, MIN_TICK, MAX_TICK, tickToPrice, formatTick, PRICE_SCALE, getTokensForChain } from '@/config/web3';
 import { awardPoints, checkReferralUnlock } from '@/lib/points';
+import { SearchIcon, OrdersIcon, RefreshIcon, XCircleIcon, CheckCircleIcon, ExternalLinkIcon, ActivityIcon, WarningIcon } from '@/components/Icons';
 
 const MAX_UINT128 = 340282366920938463463374607431768211455n;
 
@@ -95,7 +96,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
     return (
       <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out' }}>
         <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+          <div style={{ marginBottom: '16px' }}><SearchIcon size={48} color="var(--text-dim)"/></div>
           <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>No Tokens on {currentNetworkId === 4217 ? 'Mainnet' : 'Testnet'}</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: '14px', lineHeight: 1.6, maxWidth: '340px', margin: '0 auto' }}>
             {currentNetworkId === 4217
@@ -165,7 +166,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
     setTxError('');
 
     if (parsedAmount < MIN_ORDER_AMOUNT) {
-      setTxError('⚠️ Minimum order size is 0.1 tokens. Please enter a larger amount.');
+      setTxError('Minimum order size is 0.1 tokens. Please enter a larger amount.');
       setTimeout(() => setTxError(''), 6000);
       return;
     }
@@ -206,7 +207,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
   return (
     <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', maxWidth: '600px' }}>
       <div style={{ padding: '16px', borderBottom: '1px solid var(--border-light)' }}>
-        <h2 style={{ fontSize: '20px', marginBottom: '4px' }}>📋 Limit Orders</h2>
+        <h2 style={{ fontSize: '20px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><OrdersIcon size={20}/> Limit Orders</h2>
         <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.5 }}>
           Place orders directly on the Tempo price-time priority orderbook.<br />
           <strong>Flip orders</strong> automatically recreate on the opposite side when fully filled.
@@ -304,7 +305,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
         <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isFlip ? '12px' : '0' }}>
             <div>
-              <div style={{ fontWeight: 600 }}>🔁 Flip Order</div>
+              <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}><RefreshIcon size={14}/> Flip Order</div>
               <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>Auto-recreate on opposite side when filled</div>
             </div>
             <button onClick={() => setIsFlip(!isFlip)} style={{ background: isFlip ? 'var(--brand-primary)' : 'var(--bg-panel)', border: '1px solid var(--border-light)', color: 'white', padding: '6px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
@@ -335,7 +336,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
           </button>
         ) : needsApproval ? (
           <button className="btn-primary" onClick={handleApprove} disabled={isApprovePending || (isConnected && !amount)} style={{ background: 'var(--brand-primary)', opacity: (!amount || isApprovePending) ? 0.6 : 1 }}>
-            {isApprovePending ? '⏳ Approving...' : `Approve ${spendToken.symbol}`}
+            {isApprovePending ? 'Approving...' : `Approve ${spendToken.symbol}`}
           </button>
         ) : (
           <button className="btn-primary" onClick={handlePlaceOrder}
@@ -347,27 +348,27 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
         {/* TX Status */}
         {txError && (
           <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(255,71,87,0.1)', border: '1px solid var(--danger)', fontSize: '13px', textAlign: 'center', color: 'var(--danger)' }}>
-            ❌ {txError}
+            <span style={{display:'flex',alignItems:'center',gap:'6px',justifyContent:'center'}}><XCircleIcon size={14}/> {txError}</span>
           </div>
         )}
         {txHash && (
           <div style={{ padding: '12px', borderRadius: '12px', background: isSuccess ? 'rgba(39,174,96,0.1)' : 'var(--bg-card)', border: `1px solid ${isSuccess ? 'var(--success)' : 'var(--border-light)'}`, fontSize: '14px', textAlign: 'center' }}>
             {!isSuccess && (
               <div>
-                <div style={{ marginBottom: '4px' }}>📡 Transaction Sent!</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '6px' }}>⏳ Submitting to Tempo orderbook...</div>
+                <div style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}><ActivityIcon size={14}/> Transaction Sent!</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '6px' }}>Submitting to Tempo orderbook...</div>
                 <a
                   href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`}
                   target="_blank" rel="noreferrer"
                   style={{ fontSize: '12px', color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 600 }}
                 >
-                  🔍 View on Explorer ↗
+                  <span style={{display:'flex',alignItems:'center',gap:'4px'}}><SearchIcon size={12}/> View on Explorer <ExternalLinkIcon size={10}/></span>
                 </a>
               </div>
             )}
             {isSuccess && (
               <div style={{ color: 'var(--success)', fontWeight: 600 }}>
-                ✅ Order Confirmed! <a href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-primary)', textDecoration: 'none', marginLeft: '8px' }}>View ↗</a>
+                <span style={{display:'flex',alignItems:'center',gap:'6px',justifyContent:'center'}}><CheckCircleIcon size={14}/> Order Confirmed! <a href={`${currentNetworkId === 4217 ? 'https://explore.tempo.xyz' : 'https://explore.testnet.tempo.xyz'}/tx/${txHash}`} target="_blank" rel="noreferrer" style={{ color: 'var(--brand-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>View <ExternalLinkIcon size={11}/></a></span>
               </div>
             )}
           </div>
