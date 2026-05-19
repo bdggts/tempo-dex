@@ -19,8 +19,8 @@ function TokenModal({ onSelect, excludeToken, onClose, chainId }) {
   );
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: '20px', width: '360px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.6)', animation: 'fadeInUp 0.2s ease' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(16,17,24,0.95)', backdropFilter: 'blur(24px)', border: '1px solid var(--border-glass)', borderRadius: '20px', width: '380px', overflow: 'hidden', boxShadow: 'var(--shadow-xl)', animation: 'scaleIn 0.25s cubic-bezier(0.16,1,0.3,1)' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: '16px' }}>Select Token</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }}>×</button>
@@ -28,7 +28,9 @@ function TokenModal({ onSelect, excludeToken, onClose, chainId }) {
         <div style={{ padding: '12px 16px' }}>
           <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search name or symbol..."
-            style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-main)', padding: '10px 14px', borderRadius: '12px', fontSize: '14px', boxSizing: 'border-box' }}
+            style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-main)', padding: '11px 14px', borderRadius: '12px', fontSize: '14px', boxSizing: 'border-box', outline: 'none', transition: 'border-color 0.2s' }}
+            onFocus={e => e.target.style.borderColor = 'var(--border-focus)'}
+            onBlur={e => e.target.style.borderColor = 'var(--border-glass)'}  
           />
         </div>
         <div style={{ maxHeight: '320px', overflowY: 'auto', padding: '0 8px 12px' }}>
@@ -38,9 +40,9 @@ function TokenModal({ onSelect, excludeToken, onClose, chainId }) {
           {filtered.map(token => (
             <button key={token.symbol}
               onClick={() => { onSelect(token); onClose(); }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
-              style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%', padding: '12px 14px', borderRadius: '12px', border: 'none', background: 'none', color: 'var(--text-main)', cursor: 'pointer', textAlign: 'left', transition: '0.15s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%', padding: '12px 14px', borderRadius: '12px', border: 'none', background: 'none', color: 'var(--text-main)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}
             >
               <div style={{ width: '36px', height: '36px' }}></div>
               <div style={{ flex: 1 }}>
@@ -339,11 +341,11 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
         </div>
 
         {showSettings && (
-          <div style={{ padding: '12px 16px', background: 'var(--bg-card)', margin: '0 8px', borderRadius: '12px', fontSize: '13px', border: '1px solid var(--border-light)' }}>
+          <div style={{ padding: '14px 16px', background: 'var(--bg-input)', margin: '0 6px', borderRadius: '14px', fontSize: '13px', border: '1px solid var(--border-glass)', animation: 'scaleIn 0.2s ease' }}>
             <div style={{ marginBottom: '8px', fontWeight: 600 }}>Slippage Tolerance</div>
             <div style={{ display: 'flex', gap: '8px' }}>
               {[0.1, 0.5, 1.0].map(s => (
-                <button key={s} onClick={() => setSlippage(s)} style={{ flex: 1, padding: '6px', borderRadius: '8px', border: '1px solid', borderColor: slippage === s ? 'var(--brand-primary)' : 'var(--border-light)', background: slippage === s ? 'var(--brand-primary-dim)' : 'none', color: slippage === s ? 'var(--brand-primary)' : 'var(--text-dim)', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                <button key={s} onClick={() => setSlippage(s)} style={{ flex: 1, padding: '7px', borderRadius: '10px', border: '1px solid', borderColor: slippage === s ? 'var(--brand-primary)' : 'var(--border-glass)', background: slippage === s ? 'var(--brand-primary-dim)' : 'transparent', color: slippage === s ? 'var(--brand-primary)' : 'var(--text-dim)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: 'all 0.15s' }}>
                   {s}%
                 </button>
               ))}
@@ -351,10 +353,10 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
           </div>
         )}
 
-        <div style={{ padding: '8px' }}>
+        <div style={{ padding: '6px' }}>
           {/* Token In */}
           <div className="token-input-container">
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>You pay</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 500 }}>You pay</div>
             <div className="input-row">
               <input type="number" className="token-input" placeholder="0" value={amountIn} onChange={e => setAmountIn(e.target.value)} />
               <button className="token-selector" onClick={() => setModal('in')}>
@@ -376,7 +378,9 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
                         const val = parseFloat(formatUnits(portion, tokenIn.decimals));
                         setAmountIn(val % 1 === 0 ? val.toString() : val.toFixed(2));
                       }}
-                      style={{ background: 'var(--brand-primary-dim)', color: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', borderRadius: '6px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: 'rgba(255,0,122,0.08)', color: 'var(--brand-primary)', border: '1px solid rgba(255,0,122,0.2)', borderRadius: '8px', padding: '2px 7px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,0,122,0.15)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,0,122,0.08)'; }}
                     >{pct}%</button>
                   ))}
                 </div>
@@ -390,7 +394,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
 
           {/* Token Out */}
           <div className="token-input-container">
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 500 }}>
               You receive {quoteError && <span style={{ color: 'var(--danger)' }}> (no liquidity on this pair)</span>}
             </div>
             <div className="input-row">
@@ -459,7 +463,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
             </div>
           )}
           {txHash && (
-            <div style={{ marginTop: '12px', padding: '12px', borderRadius: '12px', background: isSuccess ? 'rgba(39,174,96,0.1)' : 'var(--bg-card)', border: `1px solid ${isSuccess ? 'var(--success)' : 'var(--border-light)'}`, fontSize: '14px', textAlign: 'center' }}>
+            <div style={{ marginTop: '12px', padding: '14px', borderRadius: '14px', background: isSuccess ? 'var(--success-dim)' : 'var(--bg-input)', border: `1px solid ${isSuccess ? 'var(--success)' : 'var(--border-glass)'}`, fontSize: '14px', textAlign: 'center', animation: 'scaleIn 0.25s ease' }}>
               {!isSuccess && (
                 <div>
                   <div style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}><ActivityIcon size={14}/> Transaction Sent!</div>
