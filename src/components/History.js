@@ -94,7 +94,7 @@ function OrderRow({ order, currentNetworkId }) {
   }
 
   return (
-    <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-light)', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+    <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '14px', border: '1px solid var(--border-glass)', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
       <div style={{ flex: '1 1 auto', minWidth: '150px' }}>
         <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>Order #{order.id.toString()}</div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -149,7 +149,7 @@ function OrderRow({ order, currentNetworkId }) {
 
 function SwapRow({ swap }) {
   return (
-    <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-light)', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+    <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '14px', border: '1px solid var(--border-glass)', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
       <div style={{ flex: '1 1 auto', minWidth: '150px' }}>
         <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginBottom: '4px' }}>Swap</div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -388,25 +388,25 @@ export default function History({ currentNetworkId, onConnect }) {
 
   return (
     <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', maxWidth: '600px' }}>
-      <div style={{ padding: '16px', borderBottom: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ padding: '20px', borderBottom: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h2 style={{ fontSize: '20px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><HistoryIcon size={20}/> History</h2>
             <p style={{ fontSize: '13px', color: 'var(--text-dim)' }}>Your recent limit orders and local swap history.</p>
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
-            <button onClick={() => exportData('csv')} style={{ padding: '6px 10px', background: 'var(--bg-panel)', color: 'var(--text-main)', border: '1px solid var(--border-light)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-panel)'}>
+            <button onClick={() => exportData('csv')} style={{ padding: '6px 12px', background: 'rgba(16,17,24,0.6)', color: 'var(--text-main)', border: '1px solid var(--border-glass)', borderRadius: '10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px', backdropFilter: 'blur(8px)' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-hover)'; e.currentTarget.style.transform = 'translateY(-1px)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-glass)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               CSV
             </button>
-            <button onClick={() => exportData('xlsx')} style={{ padding: '6px 10px', background: 'var(--bg-panel)', color: 'var(--success)', border: '1px solid var(--border-light)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-panel)'}>
+            <button onClick={() => exportData('xlsx')} style={{ padding: '6px 12px', background: 'rgba(16,17,24,0.6)', color: 'var(--success)', border: '1px solid var(--border-glass)', borderRadius: '10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px', backdropFilter: 'blur(8px)' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-hover)'; e.currentTarget.style.transform = 'translateY(-1px)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-glass)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               Excel
             </button>
-            <button onClick={() => exportData('pdf')} style={{ padding: '6px 10px', background: 'var(--bg-panel)', color: 'var(--danger)', border: '1px solid var(--border-light)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: '4px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-panel)'}>
+            <button onClick={() => exportData('pdf')} style={{ padding: '6px 12px', background: 'rgba(16,17,24,0.6)', color: 'var(--danger)', border: '1px solid var(--border-glass)', borderRadius: '10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px', backdropFilter: 'blur(8px)' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-hover)'; e.currentTarget.style.transform = 'translateY(-1px)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-glass)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               PDF
             </button>
           </div>
         </div>
-        <div style={{ display: 'flex', background: 'var(--bg-card)', borderRadius: '12px', padding: '4px', border: '1px solid var(--border-light)' }}>
+        <div style={{ display: 'flex', background: 'var(--bg-input)', borderRadius: '14px', padding: '4px', border: '1px solid var(--border-glass)' }}>
           <button onClick={() => setHistoryTab('orders')} style={{ flex: 1, padding: '8px', border: 'none', background: historyTab === 'orders' ? 'var(--brand-primary)' : 'transparent', color: historyTab === 'orders' ? 'white' : 'var(--text-dim)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: '0.2s' }}>Limit Orders</button>
           <button onClick={() => setHistoryTab('swaps')} style={{ flex: 1, padding: '8px', border: 'none', background: historyTab === 'swaps' ? 'var(--brand-primary)' : 'transparent', color: historyTab === 'swaps' ? 'white' : 'var(--text-dim)', borderRadius: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: '0.2s' }}>Swaps</button>
         </div>

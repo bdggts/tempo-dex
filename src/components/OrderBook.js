@@ -206,9 +206,9 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
 
   return (
     <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', maxWidth: '600px' }}>
-      <div style={{ padding: '16px', borderBottom: '1px solid var(--border-light)' }}>
-        <h2 style={{ fontSize: '20px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><OrdersIcon size={20}/> Limit Orders</h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.5 }}>
+      <div style={{ padding: '20px', borderBottom: '1px solid var(--border-glass)' }}>
+        <h2 style={{ fontSize: '20px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.02em' }}><OrdersIcon size={20}/> Limit Orders</h2>
+        <p style={{ fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.6 }}>
           Place orders directly on the Tempo price-time priority orderbook.<br />
           <strong>Flip orders</strong> automatically recreate on the opposite side when fully filled.
         </p>
@@ -223,7 +223,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
             <select
               value={selectedToken.symbol}
               onChange={(e) => setSelectedToken(getTokensForChain(currentNetworkId).find(t => t.symbol === e.target.value))}
-              style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-main)', padding: '10px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 600 }}
+              style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-main)', padding: '10px 12px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, outline: 'none', cursor: 'pointer', transition: 'border-color 0.2s' }}
             >
               {getTokensForChain(currentNetworkId).map(t => <option key={t.symbol} value={t.symbol}>{t.logo} {t.symbol}</option>)}
             </select>
@@ -231,11 +231,11 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
 
           <div>
             <label style={{ fontSize: '12px', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Side</label>
-            <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-light)' }}>
-              <button onClick={() => setIsBid(true)} style={{ flex: 1, padding: '10px', background: isBid ? 'rgba(39,174,96,0.2)' : 'var(--bg-card)', color: isBid ? 'var(--success)' : 'var(--text-dim)', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>
+            <div style={{ display: 'flex', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-glass)' }}>
+              <button onClick={() => setIsBid(true)} style={{ flex: 1, padding: '10px', background: isBid ? 'rgba(52,211,153,0.15)' : 'var(--bg-input)', color: isBid ? 'var(--success)' : 'var(--text-dim)', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', transition: 'all 0.2s', borderRight: '1px solid var(--border-glass)' }}>
                 BUY
               </button>
-              <button onClick={() => setIsBid(false)} style={{ flex: 1, padding: '10px', background: !isBid ? 'rgba(255,71,87,0.2)' : 'var(--bg-card)', color: !isBid ? 'var(--danger)' : 'var(--text-dim)', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}>
+              <button onClick={() => setIsBid(false)} style={{ flex: 1, padding: '10px', background: !isBid ? 'rgba(244,63,94,0.15)' : 'var(--bg-input)', color: !isBid ? 'var(--danger)' : 'var(--text-dim)', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', transition: 'all 0.2s' }}>
                 SELL
               </button>
             </div>
@@ -247,7 +247,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
           <label style={{ fontSize: '12px', color: 'var(--text-dim)', display: 'block', marginBottom: '6px' }}>Amount ({selectedToken.symbol})</label>
           <input
             type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00"
-            style={{ width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-main)', padding: '12px 16px', borderRadius: '10px', fontSize: '20px', fontWeight: 600 }}
+            style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-main)', padding: '12px 16px', borderRadius: '12px', fontSize: '20px', fontWeight: 600, outline: 'none', transition: 'border-color 0.2s' }}
           />
           <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', overflow: 'hidden', gap: '6px' }}>
             <span style={{ color: 'var(--text-dim)', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
@@ -278,7 +278,7 @@ export default function OrderBook({ currentNetworkId, onConnect, onSwitch }) {
                         setAmount(val % 1 === 0 ? val.toString() : val.toFixed(2));
                       }
                     }}
-                    style={{ background: 'var(--brand-primary-dim)', color: 'var(--brand-primary)', border: '1px solid var(--brand-primary)', borderRadius: '6px', padding: '2px 6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
+                    style={{ background: 'rgba(255,0,122,0.08)', color: 'var(--brand-primary)', border: '1px solid rgba(255,0,122,0.2)', borderRadius: '8px', padding: '2px 7px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s' }}
                   >{pct}%</button>
                 ))}
               </div>

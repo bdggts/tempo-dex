@@ -139,7 +139,7 @@ export default function Points({ onConnect, pendingRef }) {
         <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>How to Earn</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {Object.entries(POINT_ACTIONS).map(([key, val]) => (
-            <div key={key} style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '12px', border: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={key} style={{ background: 'var(--bg-card)', borderRadius: '14px', padding: '12px', border: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>{val.label}</span>
               <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary)', marginLeft: '8px', whiteSpace: 'nowrap' }}>+{val.points}</span>
             </div>
@@ -158,7 +158,7 @@ export default function Points({ onConnect, pendingRef }) {
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input readOnly value={referralLink}
-            style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-dim)', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            style={{ flex: 1, background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-dim)', borderRadius: '12px', padding: '10px 12px', fontSize: '12px', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', outline: 'none' }}
           />
           <button onClick={copyRef}
             style={{ background: copied ? 'var(--success)' : 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 16px', fontWeight: 700, cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap', transition: 'background 0.2s' }}>
@@ -168,7 +168,7 @@ export default function Points({ onConnect, pendingRef }) {
       </div>
 
       {/* Twitter Connect */}
-      <div className="swap-container" style={{ padding: '16px', border: userData?.twitter_followed ? '1px solid rgba(29,161,242,0.4)' : '1px solid var(--border-light)' }}>
+      <div className="swap-container" style={{ padding: '16px', border: userData?.twitter_followed ? '1px solid rgba(29,161,242,0.4)' : '1px solid var(--border-glass)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -204,8 +204,8 @@ export default function Points({ onConnect, pendingRef }) {
           : leaderboard.map((u, i) => {
             const isMe = u.wallet === address?.toLowerCase();
             return (
-              <div key={u.wallet} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: i < leaderboard.length - 1 ? '1px solid var(--border-light)' : 'none', background: isMe ? 'rgba(255,0,122,0.05)' : 'transparent', borderRadius: isMe ? '8px' : '0', paddingLeft: isMe ? '8px' : '0' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, background: i < 3 ? `${RANK_COLORS[i]}20` : 'var(--bg-card)', color: i < 3 ? RANK_COLORS[i] : 'var(--text-dim)', border: i < 3 ? `1px solid ${RANK_COLORS[i]}40` : '1px solid var(--border-light)' }}>{i + 1}</div>
+              <div key={u.wallet} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: i < leaderboard.length - 1 ? '1px solid var(--border-glass)' : 'none', background: isMe ? 'rgba(255,0,122,0.05)' : 'transparent', borderRadius: isMe ? '10px' : '0', paddingLeft: isMe ? '8px' : '0', transition: 'all 0.15s' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, background: i < 3 ? `${RANK_COLORS[i]}20` : 'var(--bg-card)', color: i < 3 ? RANK_COLORS[i] : 'var(--text-dim)', border: i < 3 ? `1px solid ${RANK_COLORS[i]}40` : '1px solid var(--border-glass)' }}>{i + 1}</div>
                 <div style={{ flex: 1, fontFamily: 'monospace', fontSize: '13px', color: isMe ? 'var(--brand-primary)' : 'var(--text-main)', fontWeight: isMe ? 700 : 400 }}>{shortAddr(u.wallet)}{isMe ? ' (you)' : ''}</div>
                 <div style={{ fontWeight: 800, fontSize: '14px', color: '#fff' }}>{u.points?.toLocaleString()} <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontWeight: 400 }}>pts</span></div>
               </div>
@@ -221,7 +221,7 @@ export default function Points({ onConnect, pendingRef }) {
           {history.map((h, i) => {
             const action = POINT_ACTIONS[h.action];
             return (
-              <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < history.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
+              <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < history.length - 1 ? '1px solid var(--border-glass)' : 'none' }}>
                 <div>
                   <div style={{ fontSize: '13px', color: 'var(--text-main)' }}>{action?.label || h.action}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-dim)' }}>{new Date(h.created_at).toLocaleDateString()}</div>

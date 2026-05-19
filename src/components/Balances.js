@@ -48,7 +48,7 @@ function TokenBalance({ token, address, currentNetworkId, index }) {
       background: 'var(--bg-card)', 
       borderRadius: '16px', 
       padding: '16px 20px', 
-      border: '1px solid var(--border-light)', 
+      border: '1px solid var(--border-glass)', 
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -59,11 +59,11 @@ function TokenBalance({ token, address, currentNetworkId, index }) {
     }}
     onMouseEnter={(e) => {
       e.currentTarget.style.background = 'var(--bg-card-hover)';
-      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
+      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)';
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.background = 'var(--bg-card)';
-      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
+      e.currentTarget.style.borderColor = 'var(--border-glass)';
     }}>
       
       {/* Left: Icon + Name */}
@@ -189,7 +189,7 @@ export default function Balances({ currentNetworkId, onConnect }) {
   return (
     <div className="swap-container" style={{ animation: 'fadeInUp 0.4s ease-out', maxWidth: '520px' }}>
       {/* Header */}
-      <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid var(--border-light)' }}>
+      <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid var(--border-glass)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>Your Assets</h2>
@@ -220,7 +220,7 @@ export default function Balances({ currentNetworkId, onConnect }) {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '8px',
-          border: '1px solid var(--border-light)',
+          border: '1px solid var(--border-glass)',
         }}>
           <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', flexShrink: 0 }} />
           <span style={{ fontFamily: 'Roboto Mono, monospace', fontSize: '13px', color: 'var(--text-dim)', fontWeight: 500 }}>
@@ -299,7 +299,7 @@ export default function Balances({ currentNetworkId, onConnect }) {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '12px 24px 16px', borderTop: '1px solid var(--border-light)', textAlign: 'center' }}>
+      <div style={{ padding: '12px 24px 16px', borderTop: '1px solid var(--border-glass)', textAlign: 'center' }}>
         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
           Balances auto-refresh every 5 seconds
         </span>
