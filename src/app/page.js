@@ -241,26 +241,27 @@ export default function Home() {
             <div className="logo-icon"><SwapIcon size={20} color="#fff"/></div>
             <div>TempoSwap</div>
           </div>
-          <nav style={{ display: 'flex', gap: '4px', background: 'var(--bg-panel)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-            {TABS.map(tab => (
-              <button key={tab.id} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 600, fontSize: '13px', background: tab.id === 'swap' ? 'var(--brand-primary)' : 'transparent', color: tab.id === 'swap' ? 'white' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <nav style={{ display: 'flex', gap: '2px', background: 'rgba(16,17,24,0.6)', padding: '3px', borderRadius: '14px', border: '1px solid var(--border-glass)', backdropFilter: 'blur(12px)' }}>
+            {TABS.filter(t => !t.adminOnly).map(tab => (
+              <button key={tab.id} style={{ padding: '8px 14px', borderRadius: '11px', border: 'none', fontWeight: 600, fontSize: '13px', background: tab.id === 'swap' ? 'var(--brand-primary)' : 'transparent', color: tab.id === 'swap' ? 'white' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: tab.id === 'swap' ? '0 2px 12px rgba(255,0,122,0.35)' : 'none' }}>
                 {tab.icon} {tab.label}
               </button>
             ))}
           </nav>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <div style={{ background: 'var(--bg-panel)', padding: '0px 10px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 6px var(--success)' }} />
-              <select defaultValue={TEMPO_TESTNET.id} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontWeight: 600, outline: 'none', padding: '7px 0', cursor: 'pointer' }}>
+            <div style={{ background: 'rgba(16,17,24,0.6)', padding: '0px 12px', borderRadius: '50px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-glass)', display: 'flex', alignItems: 'center', gap: '6px', backdropFilter: 'blur(12px)' }}>
+              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)', animation: 'pulse 2s ease-in-out infinite' }} />
+              <select defaultValue={TEMPO_TESTNET.id} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontWeight: 600, outline: 'none', padding: '8px 0', cursor: 'pointer', fontSize: '13px' }}>
                 <option value={TEMPO_TESTNET.id} style={{ background: 'var(--bg-card)', color: 'white' }}>Tempo Testnet</option>
               </select>
             </div>
-            <button className="btn-connect" onClick={() => setShowWalletModal(true)}>Connect Wallet</button>
+            <button className="btn-connect">Connect Wallet</button>
           </div>
         </header>
         <main>
           <div style={{ width: '100%', maxWidth: '520px', textAlign: 'center', color: 'var(--text-dim)', padding: '80px 0' }}>
-            Loading TempoSwap...
+            <div className="shimmer-loading" style={{ width: '200px', height: '16px', borderRadius: '8px', margin: '0 auto 12px' }} />
+            <div className="shimmer-loading" style={{ width: '120px', height: '12px', borderRadius: '6px', margin: '0 auto' }} />
           </div>
         </main>
       </>

@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev artifacts
+monitor.log
+build_output.txt
+tweet.txt
+fix-token-name.cjs
+START_MONITOR.bat
+deploy-temp/
