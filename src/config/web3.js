@@ -185,6 +185,53 @@ export function getTokensForChain(chainId) {
   return Object.values(TOKENS).filter(t => t.chainId === chainId);
 }
 
+// ─── AMM Pair Contracts (Uniswap-style x*y=k pools) ──────────────────────────
+// Deploy one TempoSwapPair per token pair. Update addresses after deploying.
+export const AMM_PAIRS = {
+  42431: {  // Testnet
+    'pUSD/AUSD': '0x0000000000000000000000000000000000000000', // Deploy needed
+    'pUSD/BUSD': '0x0000000000000000000000000000000000000000',
+    'pUSD/TUSD': '0x0000000000000000000000000000000000000000',
+  },
+  4217: {   // Mainnet
+    'pUSD/AUSD': '0x0000000000000000000000000000000000000000',
+    'pUSD/BUSD': '0x0000000000000000000000000000000000000000',
+    'pUSD/TUSD': '0x0000000000000000000000000000000000000000',
+  }
+};
+
+// Get pair address for two tokens
+export function getPairAddress(chainId, tokenA, tokenB) {
+  const pairs = AMM_PAIRS[chainId] || {};
+  // Try both orderings
+  const key1 = `${tokenA}/${tokenB}`;
+  const key2 = `${tokenB}/${tokenA}`;
+  return pairs[key1] || pairs[key2] || null;
+}
+
+export const AMM_PAIR_ABI = [
+  // Read
+  { inputs: [], name: 'token0', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'token1', outputs: [{ type: 'address' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'reserve0', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'reserve1', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'totalSupply', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'account', type: 'address' }], name: 'balanceOf', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }], name: 'quoteSwap0to1', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }], name: 'quoteSwap1to0', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'reserveIn', type: 'uint256' }, { name: 'reserveOut', type: 'uint256' }], name: 'getAmountOut', outputs: [{ name: 'amountOut', type: 'uint256' }], stateMutability: 'pure', type: 'function' },
+  // Write
+  { inputs: [{ name: 'amount0Desired', type: 'uint256' }, { name: 'amount1Desired', type: 'uint256' }, { name: 'to', type: 'address' }], name: 'addLiquidity', outputs: [{ name: 'liquidity', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [{ name: 'liquidity', type: 'uint256' }, { name: 'to', type: 'address' }], name: 'removeLiquidity', outputs: [{ name: 'amount0', type: 'uint256' }, { name: 'amount1', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'minAmountOut', type: 'uint256' }, { name: 'to', type: 'address' }], name: 'swapExactToken0ForToken1', outputs: [{ name: 'amountOut', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [{ name: 'amountIn', type: 'uint256' }, { name: 'minAmountOut', type: 'uint256' }, { name: 'to', type: 'address' }], name: 'swapExactToken1ForToken0', outputs: [{ name: 'amountOut', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  // Events
+  { anonymous: false, inputs: [{ indexed: true, name: 'provider', type: 'address' }, { indexed: false, name: 'amount0', type: 'uint256' }, { indexed: false, name: 'amount1', type: 'uint256' }, { indexed: false, name: 'liquidity', type: 'uint256' }], name: 'Mint', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: true, name: 'provider', type: 'address' }, { indexed: false, name: 'amount0', type: 'uint256' }, { indexed: false, name: 'amount1', type: 'uint256' }, { indexed: false, name: 'liquidity', type: 'uint256' }], name: 'Burn', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: true, name: 'sender', type: 'address' }, { indexed: false, name: 'amount0In', type: 'uint256' }, { indexed: false, name: 'amount1In', type: 'uint256' }, { indexed: false, name: 'amount0Out', type: 'uint256' }, { indexed: false, name: 'amount1Out', type: 'uint256' }, { indexed: true, name: 'to', type: 'address' }], name: 'Swap', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: false, name: 'reserve0', type: 'uint256' }, { indexed: false, name: 'reserve1', type: 'uint256' }], name: 'Sync', type: 'event' },
+];
+
 // â”€â”€â”€ Deposit Registry Contract â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // âš ï¸ REPLACE after deploying DepositRegistry.sol via Remix or deploy-registry.js
 // Deploy instructions: contracts/deploy-registry.js
