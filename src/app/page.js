@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import SwapBox from '@/components/SwapBox';
 import OrderBook from '@/components/OrderBook';
+import Pools from '@/components/Pools';
 import Balances from '@/components/Balances';
 import Earn from '@/components/Earn';
 import History from '@/components/History';
@@ -35,6 +36,7 @@ const NETWORKS = {
 const TABS = [
   { id: 'swap',    icon: <SwapIcon size={14}/>,    label: 'Swap' },
   { id: 'orders',  icon: <OrdersIcon size={14}/>,  label: 'Orders' },
+  { id: 'pools',   icon: <DropletIcon size={14}/>, label: 'Pools' },
   { id: 'earn',    icon: <EarnIcon size={14}/>,    label: 'Earn' },
   { id: 'wallet',  icon: <WalletIcon size={14}/>,  label: 'Balances' },
   { id: 'history', icon: <HistoryIcon size={14}/>, label: 'History' },
@@ -48,10 +50,10 @@ const TABS = [
 const MOBILE_TABS = [
   { id: 'swap',    icon: <SwapIcon size={18}/>,    label: 'Swap' },
   { id: 'orders',  icon: <OrdersIcon size={18}/>,  label: 'Orders' },
+  { id: 'pools',   icon: <DropletIcon size={18}/>, label: 'Pools' },
   { id: 'earn',    icon: <EarnIcon size={18}/>,    label: 'Earn' },
   { id: 'points',  icon: <TrophyIcon size={18}/>,  label: 'Points' },
   { id: 'wallet',  icon: <WalletIcon size={18}/>,  label: 'Wallet' },
-  { id: 'guide',   icon: <BookIcon size={18}/>,    label: 'Guide' },
 ];
 
 // ── Wallet Selector Modal ──────────────────────────────────────────────────
@@ -395,6 +397,7 @@ export default function Home() {
 
           {activeTab === 'swap'    && <ErrorBoundary><SwapBox currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} /></ErrorBoundary>}
           {activeTab === 'orders'  && <ErrorBoundary><OrderBook currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} /></ErrorBoundary>}
+          {activeTab === 'pools'   && <ErrorBoundary><Pools currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} /></ErrorBoundary>}
           {activeTab === 'earn'    && <ErrorBoundary><Earn currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} /></ErrorBoundary>}
           {activeTab === 'wallet'  && <ErrorBoundary><Balances currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} onSwitch={switchOrAddNetwork} /></ErrorBoundary>}
           {activeTab === 'history' && <ErrorBoundary><History currentNetworkId={activeChainId} onConnect={() => setShowWalletModal(true)} /></ErrorBoundary>}
