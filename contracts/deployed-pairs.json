@@ -1,0 +1,11 @@
+{
+  "chainId": 42431,
+  "network": "testnet",
+  "pairs": {
+    "pUSD/AUSD": "0x61077aE61659F092b48405f47ce7583D7Df085dA",
+    "pUSD/BUSD": "0x7acAb6Df2dF51c13480A6a27D264AC3314beac0a",
+    "pUSD/TUSD": "0xe0d4820c973B4ee99f5903D78274c7E056623ac0"
+  },
+  "deployer": "0x76fCcFce8Deb1467364a2F5Ae3d62B03c821d524",
+  "timestamp": "2026-05-20T04:05:35.961Z"
+}

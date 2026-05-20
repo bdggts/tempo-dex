@@ -16,14 +16,14 @@
         "next": "16.1.6",
         "react": "19.2.3",
         "react-dom": "19.2.3",
-        "solc": "^0.8.34",
+        "solc": "^0.8.35",
         "viem": "^2.47.4",
         "wagmi": "^3.5.0",
         "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@nomicfoundation/hardhat-ethers": "^4.0.6",
-        "dotenv": "^17.3.1",
+        "dotenv": "^17.4.2",
         "eslint": "^9",
         "eslint-config-next": "16.1.6",
         "ethers": "^6.16.0",

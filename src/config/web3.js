@@ -188,10 +188,10 @@ export function getTokensForChain(chainId) {
 // ─── AMM Pair Contracts (Uniswap-style x*y=k pools) ──────────────────────────
 // Deploy one TempoSwapPair per token pair. Update addresses after deploying.
 export const AMM_PAIRS = {
-  42431: {  // Testnet
-    'pUSD/AUSD': '0x0000000000000000000000000000000000000000', // Deploy needed
-    'pUSD/BUSD': '0x0000000000000000000000000000000000000000',
-    'pUSD/TUSD': '0x0000000000000000000000000000000000000000',
+  42431: {  // Testnet — LIVE ✅
+    'pUSD/AUSD': '0x61077aE61659F092b48405f47ce7583D7Df085dA',
+    'pUSD/BUSD': '0x7acAb6Df2dF51c13480A6a27D264AC3314beac0a',
+    'pUSD/TUSD': '0xe0d4820c973B4ee99f5903D78274c7E056623ac0',
   },
   4217: {   // Mainnet
     'pUSD/AUSD': '0x0000000000000000000000000000000000000000',
