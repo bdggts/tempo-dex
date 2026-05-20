@@ -47,3 +47,5 @@ tweet.txt
 fix-token-name.cjs
 START_MONITOR.bat
 deploy-temp/
+
+.vercel

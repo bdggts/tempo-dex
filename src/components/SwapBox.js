@@ -143,20 +143,22 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   // ─── AMM Pool lookup ─────────────────────────────────────────────────────
   const ammPairAddress = (() => {
     if (!tokenIn || !tokenOut) return null;
-    return getPairAddress(currentNetworkId, tokenIn.symbol, tokenOut.symbol);
+    try { return getPairAddress(currentNetworkId, tokenIn.symbol, tokenOut.symbol) || null; } catch { return null; }
   })();
-  const ammLive = ammPairAddress && ammPairAddress !== '0x0000000000000000000000000000000000000000';
+  const ammLive = !!ammPairAddress && ammPairAddress !== '0x0000000000000000000000000000000000000000';
 
   // Determine token order in AMM pair (token0 = first in pair name)
   const ammPairName = ammPairAddress ? Object.entries(AMM_PAIRS[currentNetworkId] || {}).find(([,v]) => v === ammPairAddress)?.[0] : null;
   const ammToken0Symbol = ammPairName ? ammPairName.split('/')[0] : null;
-  const isToken0In = tokenIn?.symbol === ammToken0Symbol; // true = swap token0→token1
+  const isToken0In = ammToken0Symbol ? tokenIn?.symbol === ammToken0Symbol : true;
+  const ammQuoteFn = isToken0In ? 'quoteSwap0to1' : 'quoteSwap1to0';
 
-  // Read AMM quote
+  // Read AMM quote (only when pair exists)
   const { data: ammQuote } = useReadContract({
-    address: ammPairAddress, abi: AMM_PAIR_ABI,
-    functionName: isToken0In ? 'quoteSwap0to1' : 'quoteSwap1to0',
-    args: parsedAmountIn > 0n ? [parsedAmountIn] : undefined,
+    address: ammLive ? ammPairAddress : undefined,
+    abi: AMM_PAIR_ABI,
+    functionName: ammQuoteFn,
+    args: (ammLive && parsedAmountIn > 0n) ? [parsedAmountIn] : undefined,
     query: { enabled: ammLive && parsedAmountIn > 0n && !!tokenIn && !!tokenOut, refetchInterval: 8000 },
     chainId: currentNetworkId,
   });
