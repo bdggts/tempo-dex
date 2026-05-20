@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId, useSwitchChain } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
-import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, ADMIN_WALLET, getTokensForChain } from '@/config/web3';
+import { DEX_ADDRESS, DEX_ABI, ERC20_ABI, TOKENS, PLATFORM_FEE_BPS, FEE_DENOMINATOR, ADMIN_WALLET, getTokensForChain, AMM_PAIRS, AMM_PAIR_ABI, getPairAddress } from '@/config/web3';
 import { awardPoints, checkReferralUnlock } from '@/lib/points';
 import { SearchIcon, SettingsIcon, ZapIcon, XCircleIcon, CheckCircleIcon, ExternalLinkIcon, WarningIcon, ActivityIcon } from '@/components/Icons';
 
@@ -140,27 +140,54 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   const parsedAmountIn = amountIn && !isNaN(amountIn) && tokenIn
     ? safeParseUnits(amountIn, tokenIn.decimals) : 0n;
 
-  // Read Allowance
-  const { data: allowance } = useReadContract({
+  // ─── AMM Pool lookup ─────────────────────────────────────────────────────
+  const ammPairAddress = (() => {
+    if (!tokenIn || !tokenOut) return null;
+    return getPairAddress(currentNetworkId, tokenIn.symbol, tokenOut.symbol);
+  })();
+  const ammLive = ammPairAddress && ammPairAddress !== '0x0000000000000000000000000000000000000000';
+
+  // Determine token order in AMM pair (token0 = first in pair name)
+  const ammPairName = ammPairAddress ? Object.entries(AMM_PAIRS[currentNetworkId] || {}).find(([,v]) => v === ammPairAddress)?.[0] : null;
+  const ammToken0Symbol = ammPairName ? ammPairName.split('/')[0] : null;
+  const isToken0In = tokenIn?.symbol === ammToken0Symbol; // true = swap token0→token1
+
+  // Read AMM quote
+  const { data: ammQuote } = useReadContract({
+    address: ammPairAddress, abi: AMM_PAIR_ABI,
+    functionName: isToken0In ? 'quoteSwap0to1' : 'quoteSwap1to0',
+    args: parsedAmountIn > 0n ? [parsedAmountIn] : undefined,
+    query: { enabled: ammLive && parsedAmountIn > 0n && !!tokenIn && !!tokenOut, refetchInterval: 8000 },
+    chainId: currentNetworkId,
+  });
+
+  // Read Allowance for DEX (orderbook)
+  const { data: allowanceDex } = useReadContract({
     address: tokenIn?.address, abi: ERC20_ABI,
     functionName: 'allowance',
     args: address && tokenIn ? [address, DEX_ADDRESS] : undefined,
     query: { enabled: !!address && !!tokenIn, refetchInterval: 5000 },
     chainId: currentNetworkId,
   });
-
-  const needsApproval = allowance !== undefined && allowance < parsedAmountIn;
+  // Read Allowance for AMM pair
+  const { data: allowanceAmm } = useReadContract({
+    address: tokenIn?.address, abi: ERC20_ABI,
+    functionName: 'allowance',
+    args: address && tokenIn && ammPairAddress ? [address, ammPairAddress] : undefined,
+    query: { enabled: !!address && !!tokenIn && ammLive, refetchInterval: 5000 },
+    chainId: currentNetworkId,
+  });
 
   const { writeContract: writeApprove, data: approveTxHash, isPending: isApproveSigning } = useWriteContract();
   const { isLoading: isApproveConfirming } = useWaitForTransactionReceipt({ hash: approveTxHash });
 
   const isApprovePending = isApproveSigning || isApproveConfirming;
 
-  const handleApprove = () => {
+  const handleApprove = (spender) => {
     writeApprove({
       address: tokenIn.address, abi: ERC20_ABI, chainId: currentNetworkId,
       functionName: 'approve',
-      args: [DEX_ADDRESS, 115792089237316195423570985008687907853269984665640564039457584007913129639935n],
+      args: [spender, 115792089237316195423570985008687907853269984665640564039457584007913129639935n],
     });
   };
 
@@ -192,18 +219,26 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
   const bestAskTick = booksData ? Number(booksData.bestAskTick) : 0;
   const pairHasOrders = bestBidTick !== 0 || bestAskTick !== 0;
 
-  // Smart Swap: use direct swap if liquidity exists, otherwise auto-place market order
-  const hasLiquidity = !quoteError && quotedOut != null && quotedOut > 0n;
-  const swapMode = hasLiquidity ? 'direct' : pairHasOrders ? 'market-order' : 'no-liquidity';
+  // Smart Routing: Orderbook first → AMM Pool fallback
+  const hasOrderbookLiquidity = !quoteError && quotedOut != null && quotedOut > 0n;
+  const hasAmmLiquidity = ammLive && ammQuote != null && ammQuote > 0n;
+  const swapMode = hasOrderbookLiquidity ? 'direct' : hasAmmLiquidity ? 'amm-pool' : pairHasOrders ? 'market-order' : 'no-liquidity';
+
+  // Use the best quote (orderbook or AMM)
+  const effectiveQuote = swapMode === 'amm-pool' ? ammQuote : quotedOut;
+  const needsApproval = swapMode === 'amm-pool'
+    ? (allowanceAmm !== undefined && allowanceAmm < parsedAmountIn)
+    : (allowanceDex !== undefined && allowanceDex < parsedAmountIn);
+  const approveTarget = swapMode === 'amm-pool' ? ammPairAddress : DEX_ADDRESS;
 
   const lastSwapRef = useRef(null);
 
   // Calculate fee and net output using BigInt to avoid precision/notation errors
-  const feeBigInt = (quotedOut != null) ? (quotedOut * BigInt(PLATFORM_FEE_BPS)) / BigInt(FEE_DENOMINATOR) : 0n;
-  const netOutBigInt = (quotedOut != null) ? quotedOut - feeBigInt : 0n;
+  const feeBigInt = (effectiveQuote != null) ? (effectiveQuote * BigInt(PLATFORM_FEE_BPS)) / BigInt(FEE_DENOMINATOR) : 0n;
+  const netOutBigInt = (effectiveQuote != null) ? effectiveQuote - feeBigInt : 0n;
 
-  const feeDisplay = quotedOut != null && tokenOut ? parseFloat(formatUnits(feeBigInt, tokenOut.decimals)) : 0;
-  const netOutDisplay = quotedOut != null && tokenOut ? formatUnits(netOutBigInt, tokenOut.decimals) : '0';
+  const feeDisplay = effectiveQuote != null && tokenOut ? parseFloat(formatUnits(feeBigInt, tokenOut.decimals)) : 0;
+  const netOutDisplay = effectiveQuote != null && tokenOut ? formatUnits(netOutBigInt, tokenOut.decimals) : '0';
 
   const [txError, setTxError] = useState('');
   const { writeContract, data: txHash, isPending } = useWriteContract({
@@ -249,7 +284,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     setTxError('');
 
     if (swapMode === 'direct') {
-      // ─── Direct Swap (liquidity available in orderbook) ───────────────────
+      // ─── Direct Swap via Orderbook ────────────────────────────────────────
       const slipBps = BigInt(Math.floor(slippage * 100));
       const totalDeductBps = slipBps + BigInt(PLATFORM_FEE_BPS);
       const minOut = (quotedOut * (10000n - totalDeductBps)) / 10000n;
@@ -258,8 +293,18 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
         functionName: 'swapExactAmountIn',
         args: [tokenIn.address, tokenOut.address, parsedAmountIn, minOut],
       });
+    } else if (swapMode === 'amm-pool') {
+      // ─── AMM Pool Swap (Uniswap-style) ────────────────────────────────────
+      const slipBps = BigInt(Math.floor(slippage * 100));
+      const totalDeductBps = slipBps + BigInt(PLATFORM_FEE_BPS);
+      const minOut = (ammQuote * (10000n - totalDeductBps)) / 10000n;
+      writeContract({
+        address: ammPairAddress, abi: AMM_PAIR_ABI, chainId: currentNetworkId,
+        functionName: isToken0In ? 'swapExactToken0ForToken1' : 'swapExactToken1ForToken0',
+        args: [parsedAmountIn, minOut, address],
+      });
     } else if (swapMode === 'market-order') {
-      // ─── Market Order fallback (no direct liquidity) ──────────────────────
+      // ─── Market Order fallback ────────────────────────────────────────────
       const baseToken = tokenIn.isQuoteToken ? tokenOut : tokenIn;
       const isBid = tokenIn.isQuoteToken;
       const rawTick = isBid
@@ -305,9 +350,10 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
     setAmountIn('');
   };
 
-  const amountOut = quotedOut && !quoteError && amountIn && tokenOut ? formatUnits(quotedOut, tokenOut.decimals) : '';
+  const amountOut = effectiveQuote && amountIn && tokenOut ? formatUnits(effectiveQuote, tokenOut.decimals) : '';
   const priceDisplay = amountIn && amountOut && !isNaN(amountOut) && tokenIn && tokenOut
     ? `1 ${tokenIn.symbol} ≈ ${(parseFloat(amountOut) / parseFloat(amountIn)).toFixed(6)} ${tokenOut.symbol}` : null;
+  const routeLabel = swapMode === 'direct' ? '📒 Orderbook' : swapMode === 'amm-pool' ? '🌊 AMM Pool' : swapMode === 'market-order' ? '📒 Market Order' : null;
 
   // Show empty state when no tokens for this network (AFTER all hooks)
   if (!tokenIn || !tokenOut) {
@@ -427,7 +473,7 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               </div>
               <div className="tx-row"><span>You Receive (net)</span><span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{netOutDisplay} {tokenOut.symbol}</span></div>
               <div className="tx-row"><span>Min Received</span><span>{netOutDisplay !== '0' ? (parseFloat(netOutDisplay) * (1 - slippage / 100)).toFixed(6) : '0'} {tokenOut.symbol}</span></div>
-              <div className="tx-row"><span>Execution</span><span style={{ color: 'var(--success)' }}>Price-Time Orderbook</span></div>
+              <div className="tx-row"><span>Execution</span><span style={{ color: 'var(--success)' }}>{routeLabel || 'Orderbook'}</span></div>
               <div className="tx-row"><span>Network Fee</span><span style={{ color: 'var(--success)', fontWeight: 700 }}>$0.00 (Sponsored)</span></div>
             </div>
           )}
@@ -437,13 +483,13 @@ export default function SwapBox({ currentNetworkId, onConnect, onSwitch }) {
               Switch to {currentNetworkId === 4217 ? 'Tempo Mainnet' : 'Tempo Testnet'}
             </button>
           ) : needsApproval ? (
-            <button className="btn-primary" onClick={handleApprove} disabled={isApprovePending || (isConnected && (!amountIn || parseFloat(amountIn) <= 0))} style={{ background: 'var(--brand-primary)', opacity: (!amountIn || parseFloat(amountIn) <= 0 || isApprovePending) ? 0.6 : 1 }}>
+            <button className="btn-primary" onClick={() => handleApprove(approveTarget)} disabled={isApprovePending || (isConnected && (!amountIn || parseFloat(amountIn) <= 0))} style={{ background: 'var(--brand-primary)', opacity: (!amountIn || parseFloat(amountIn) <= 0 || isApprovePending) ? 0.6 : 1 }}>
               {isApprovePending ? 'Approving...' : `Approve ${tokenIn.symbol}`}
             </button>
           ) : (
             <button className="btn-primary" onClick={handleSwap}
               disabled={isPending || (isConnected && (!amountIn || parseFloat(amountIn) <= 0))}
-              style={!hasLiquidity && amountIn ? { background: 'linear-gradient(135deg, #f59e0b, #d97706)' } : {}}>
+              style={swapMode === 'amm-pool' && amountIn ? { background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' } : swapMode === 'market-order' && amountIn ? { background: 'linear-gradient(135deg, #f59e0b, #d97706)' } : {}}>
               {!isConnected
                 ? 'Connect Wallet'
                 : isPending
