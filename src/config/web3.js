@@ -227,6 +227,66 @@ export function estimateYield(amount, annualApy, days) {
   return (amount * (annualApy / 100) * (days / 365));
 }
 
+// ─── Liquidity Vault Contract ─────────────────────────────────────────────────
+// ⚠️ REPLACE after deploying LiquidityVault.sol
+export const VAULT_ADDRESS = {
+  42431: '0x0000000000000000000000000000000000000000', // Testnet - deploy needed
+  4217:  '0x0000000000000000000000000000000000000000', // Mainnet - deploy later
+};
+
+export const VAULT_LOCK_TIER = {
+  FLEXIBLE: 0,  // No lock     → 1.0x boost
+  SILVER:   1,  // 30 days     → 1.2x boost
+  GOLD:     2,  // 90 days     → 1.5x boost
+  DIAMOND:  3,  // 180 days    → 2.0x boost
+};
+
+export const VAULT_LOCK_DAYS = {
+  [VAULT_LOCK_TIER.FLEXIBLE]: 0,
+  [VAULT_LOCK_TIER.SILVER]:   30,
+  [VAULT_LOCK_TIER.GOLD]:     90,
+  [VAULT_LOCK_TIER.DIAMOND]:  180,
+};
+
+export const VAULT_BOOST = {
+  [VAULT_LOCK_TIER.FLEXIBLE]: 1.0,
+  [VAULT_LOCK_TIER.SILVER]:   1.2,
+  [VAULT_LOCK_TIER.GOLD]:     1.5,
+  [VAULT_LOCK_TIER.DIAMOND]:  2.0,
+};
+
+export const VAULT_ABI = [
+  // deposit(token, amount, lockTier)
+  { inputs: [{ name: 'token', type: 'address' }, { name: 'amount', type: 'uint256' }, { name: 'lockTier', type: 'uint8' }], name: 'deposit', outputs: [{ name: 'depositIndex', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' },
+  // withdraw(depositIndex)
+  { inputs: [{ name: 'depositIndex', type: 'uint256' }], name: 'withdraw', outputs: [], stateMutability: 'nonpayable', type: 'function' },
+  // claimRewards(depositIndex)
+  { inputs: [{ name: 'depositIndex', type: 'uint256' }], name: 'claimRewards', outputs: [], stateMutability: 'nonpayable', type: 'function' },
+  // emergencyWithdraw(depositIndex)
+  { inputs: [{ name: 'depositIndex', type: 'uint256' }], name: 'emergencyWithdraw', outputs: [], stateMutability: 'nonpayable', type: 'function' },
+  // pendingRewards(user, depositIndex)
+  { inputs: [{ name: 'user', type: 'address' }, { name: 'depositIndex', type: 'uint256' }], name: 'pendingRewards', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // getUserDepositCount(user)
+  { inputs: [{ name: 'user', type: 'address' }], name: 'getUserDepositCount', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // getUserDeposit(user, index)
+  { inputs: [{ name: 'user', type: 'address' }, { name: 'index', type: 'uint256' }], name: 'getUserDeposit', outputs: [{ name: 'token', type: 'address' }, { name: 'amount', type: 'uint256' }, { name: 'boostedShares', type: 'uint256' }, { name: 'lockTier', type: 'uint8' }, { name: 'depositTime', type: 'uint256' }, { name: 'unlockTime', type: 'uint256' }, { name: 'claimedRewards', type: 'uint256' }, { name: 'active', type: 'bool' }], stateMutability: 'view', type: 'function' },
+  // getPoolTVL(token)
+  { inputs: [{ name: 'token', type: 'address' }], name: 'getPoolTVL', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // getContractBalance(token)
+  { inputs: [{ name: 'token', type: 'address' }], name: 'getContractBalance', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // totalBoostedShares
+  { inputs: [], name: 'totalBoostedShares', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // rewardPerShare
+  { inputs: [], name: 'rewardPerShare', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  // paused
+  { inputs: [], name: 'paused', outputs: [{ type: 'bool' }], stateMutability: 'view', type: 'function' },
+  // Events
+  { anonymous: false, inputs: [{ indexed: true, name: 'user', type: 'address' }, { indexed: true, name: 'token', type: 'address' }, { indexed: false, name: 'amount', type: 'uint256' }, { indexed: false, name: 'lockTier', type: 'uint8' }, { indexed: false, name: 'unlockTime', type: 'uint256' }, { indexed: false, name: 'depositIndex', type: 'uint256' }], name: 'Deposited', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: true, name: 'user', type: 'address' }, { indexed: false, name: 'depositIndex', type: 'uint256' }, { indexed: false, name: 'amount', type: 'uint256' }, { indexed: false, name: 'rewards', type: 'uint256' }], name: 'Withdrawn', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: true, name: 'user', type: 'address' }, { indexed: false, name: 'depositIndex', type: 'uint256' }, { indexed: false, name: 'rewards', type: 'uint256' }], name: 'RewardsClaimed', type: 'event' },
+  { anonymous: false, inputs: [{ indexed: false, name: 'amount', type: 'uint256' }, { indexed: false, name: 'newRewardPerShare', type: 'uint256' }], name: 'RevenueDistributed', type: 'event' },
+];
+
 export const REGISTRY_ABI = [
   {
     "inputs": [
